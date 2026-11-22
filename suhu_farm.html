@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Suhu Farm Rencang</title>
+  <style>
+    :root {
+      --bg: #0d0d2e;
+      --card: #1a1a3e;
+      --accent: #e94560;
+      --text: #f0f0f5;
+      --muted: #7a7a9e;
+      --success: #00e676;
+      --warning: #ffd93d;
+      --danger: #ff4d4d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 30px; font-size: 1.8rem; background: linear-gradient(135deg, var(--accent), #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .container { max-width: 1200px; margin: 0 auto; display: grid; gap: 20px; }
+    @media (min-width: 768px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
+    .card { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); }
+    .card h3 { margin-bottom: 12px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+    .temp { font-size: 2.5rem; font-weight: bold; margin: 10px 0; }
+    .temp.ideal { color: var(--success); }
+    .temp.tolerabel { color: var(--warning); }
+    .temp.panas { color: var(--danger); }
+    .temp.dingin { color: #ff6b6b; }
+    .label { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+    .progress { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 12px; }
+    .progress-bar { height: 100%; width: var(--pct%); background: linear-gradient(90deg, var(--success), var(--warning), var(--danger)); transition: width 0.3s; }
+    .status { font-size: 0.8rem; margin-top: 6px; }
+    .last-update { text-align: center; margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px; color: var(--muted); }
+    .last-update span { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <h1>Dashboard Suhu Farm Rencang</h1>
+  <div class="container">
+    <!-- Kandang Ayam -->
+    <div class="card">
+      <h3>Kandang Ayam (Suhu -3°C)</h3>
+      <div class="temp" id="temp-coop">--°C</div>
+      <div class="label" id="status-coop">--</div>
+      <div class="progress"><div class="progress-bar" style="--pct: 0"></div></div>
+
+      <!-- Daftar Tugas Kandang Ayam -->
+      <div class="task-list">
+        <ul>
+          <li><strong>Tugas:</strong> Balik (jemur) Ubi yang sudah dijemur agar lebih mudah dipetik.</li>
+          <li><strong>Pantas:</strong> Jika suhu real-time −3°C sudah >28°C → heat stress, nafsi makan turun, panting.</li>
+          <li><strong>Catatan:</strong> Suhu kandang ayam = realtime −3°C. Ideal 18–24°C, tolerabel 24–28°C, panas >28°C (risiko heat stress).</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Kolam Ikan -->
+    <div class="card">
+      <h3>Kolam Ikan (Suhu -5°C)</h3>
+      <div class="temp" id="temp-pond">--°C</div>
+      <div class="label" id="status-pond">--</div>
+      <div class="progress"><div class="progress-bar" style="--pct: 0"></div></div>
+
+      <!-- Daftar Tugas Kolam Ikan -->
+      <div class="task-list">
+        <ul>
+          <li><strong>Tugas:</strong> Cek warna air kolam ikan — masih hijau muda?</li>
+          <li><strong>Pantas:</strong> Jika suhu real-time −5°C sudah >30°C → oksigen air menurun, stres, risiko kematian.</li>
+          <li><strong>Catatan:</strong> Suhu kolam ikan = realtime −5°C. Ideal 26–30°C, tolerabel 24–30°C, panas >30°C (risiko kematian).</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tanam Ubi Jalar -->
+    <div class="card">
+      <h3>Tanam Ubi Jalar (Suhu +5°C)</h3>
+      <div class="temp" id="temp-ubi">--°C</div>
+      <div class="label" id="status-ubi">--</div>
+      <div class="progress"><div class="progress-bar" style="--pct: 0"></div></div>
+
+      <!-- Daftar Tugas Tanam Ubi Jalar -->
+      <div class="task-list">
+        <ul>
+          <li><strong>Tugas:</strong> Panen Ubi keras dari 8 polibag, cuci bersih → kupas → potong ±2 mm → susun di kanopi/HVS.</li>
+          <li><strong>Pantas:</strong> Suhu tanam ubi jalar = realtime +5°C. Ideal 21–27°C, tolerabel 24–28°C, panas >28°C (stres panas, penurunan fotosintesis, umbi kecil), dingin <24°C (pertumbuhan lambat).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="last-update">
+    Waktu update terakhir: <span id="last-update">--:--</span>
+  </div>
+
+  <script>
+    const apiUrl = 'https://api.open-meteo.com/v1/forecast?latitude=-7.49958&longitude=112.69992&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia/Jakarta';
+    const refreshInterval = 180000; // 3 jam
+
+    async function fetchData() {
+      try {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        const cur = data.current;
+        if (!cur) throw new Error('No data');
+        return cur;
+      } catch (e) {
+        console.error(e);
+        return null;
+      }
+    }
+
+    function interpretSuhu(suhu, tipe) {
+      let idealMin, idealMax, label, warn;
+      if (tipe === 'coop') {
+        idealMin = 18; idealMax = 24;
+        if (suhu >= idealMin && suhu <= idealMax) label = 'Ideal (18-24°C)';
+        else if (suhu > idealMax && suhu <= 28) label = 'Tolerabel (24-28°C)';
+        else if (suhu > 28) label = 'Panas (>28°C) - risiko heat stress, nafsi makan turun, panting';
+        else label = 'Dingin (<18°C) - risiko nafsi makan turun, rentan pneumonia';
+      } else if (tipe === 'pond') {
+        idealMin = 26; idealMax = 30;
+        if (suhu >= idealMin && suhu <= idealMax) label = 'Ideal (26-30°C)';
+        else if (suhu >= 24 && suhu < idealMin) label = 'Tolerabel (24-30°C)';
+        else if (suhu > 30) label = 'Panas (>30°C) - oksigen turun, stres, risiko kematian';
+        else label = 'Dingin (<24°C) - pertumbuhan lambat';
+      } else if (tipe === 'ubi') {
+        idealMin = 21; idealMax = 27;
+        if (suhu >= idealMin && suhu <= idealMax) label = 'Ideal (21-27°C)';
+        else if (suhu > idealMax && suhu <= 28) label = 'Tolerabel (24-28°C)';
+        else if (suhu > 28) label = 'Panas (>30°C) - stres panas, penurunan fotosintesis, umbi kecil';
+        else label = 'Dingin (<24°C) - pertumbuhan lambat';
+      }
+      return { label, warn };
+    }
+
+    function updateProgress(card, pct) {
+      card.querySelector('.progress-bar').style.width = pct + '%';
+    }
+
+    async function render() {
+      const data = await fetchData();
+      if (!data) { setTimeout(render, 30000); return; }
+
+      const t = data.temperature_2m;
+      const rh = data.relative_humidity_2m;
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('id-ID') + ' WIB';
+
+      // Kandang ayam
+      const coop = t - 3;
+      const {label: coopLabel, warn: coopWarn} = interpretSuhu(coop, 'coop');
+      document.getElementById('temp-coop').textContent = coop.toFixed(1) + '°C';
+      document.getElementById('status-coop').textContent = coopLabel;
+      document.getElementById('status-coop').className = coopLabel.includes('Panas') ? 'panas' : coopLabel.includes('Dingin') ? 'dingin' : 'ideal';
+      updateProgress(document.querySelector('.card:nth-child(1)'), coop >= 18 && coop <= 24 ? 100 : coop >= 24 && coop <= 28 ? 70 : 30);
+
+      // Kolam ikan
+      const pond = t - 5;
+      const {label: pondLabel, warn: pondWarn} = interpretSuhu(pond, 'pond');
+      document.getElementById('temp-pond').textContent = pond.toFixed(1) + '°C';
+      document.getElementById('status-pond').textContent = pondLabel;
+      document.getElementById('status-pond').className = pondLabel.includes('Panas') ? 'panas' : pondLabel.includes('Dingin') ? 'dingin' : 'ideal';
+      updateProgress(document.querySelector('.card:nth-child(2)'), pond >= 26 && pond <= 30 ? 100 : pond >= 24 && pond <= 30 ? 70 : 30);
+
+      // Ubi jalar
+      const ubi = t + 5;
+      const {label: ubiLabel, warn: ubiWarn} = interpretSuhu(ubi, 'ubi');
+      document.getElementById('temp-ubi').textContent = ubi.toFixed(1) + '°C';
+      document.getElementById('status-ubi').textContent = ubiLabel;
+      document.getElementById('status-ubi').className = ubiLabel.includes('Panas') ? 'panas' : ubiLabel.includes('Dingin') ? 'dingin' : 'ideal';
+      updateProgress(document.querySelector('.card:nth-child(3)'), ubi >= 21 && ubi <= 27 ? 100 : ubi >= 24 && ubi <= 28 ? 70 : 30);
+
+      document.getElementById('last-update').textContent = timeStr;
+    }
+
+    // Initial render + auto refresh
+    render();
+    setInterval(render, refreshInterval);
+  </script>
+</body>
+</html>
