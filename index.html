@@ -1,228 +1,1340 @@
 <!DOCTYPE html>
-<html lang="id" dir="ltr">
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Suhu Farm Rencang</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rencang Farm — Dashboard Iklim Mikro Banjarasri</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            mintCanvas: '#E2F8F9',
+            tealActive: '#D3F4F6',
+            tealBrand: '#0D9488',
+            cyanAccent: '#06B6D4',
+          },
+          boxShadow: {
+            card: '0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03)',
+            cardHover: '0 10px 25px -5px rgba(13, 148, 136, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.04)',
+          },
+        },
+      },
+    };
+  </script>
   <style>
-    :root {
-      --bg: #0d0d2e;
-      --card: #1a1a3e;
-      --accent: #e94560;
-      --text: #f0f0f5;
-      --muted: #7a7a9e;
-      --success: #00e676;
-      --warning: #ffd93d;
-      --danger: #ff4d4d;
+    body {
+      background-color: #E2F8F9;
+      color: #0F172A;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; }
-    h1 { text-align: center; margin-bottom: 30px; font-size: 1.8rem; background: linear-gradient(135deg, var(--accent), #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .container { max-width: 1200px; margin: 0 auto; display: grid; gap: 20px; }
-    @media (min-width: 768px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
-    .card { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); }
-    .card h3 { margin-bottom: 12px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-    .temp { font-size: 2.5rem; font-weight: bold; margin: 10px 0; }
-    .temp.ideal { color: var(--success); }
-    .temp.tolerabel { color: var(--warning); }
-    .temp.panas { color: var(--danger); }
-    .temp.dingin { color: #ff6b6b; }
-    .label { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
-    .progress { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 12px; }
-    .progress-bar { height: 100%; width: var(--pct%); background: linear-gradient(90deg, var(--success), var(--warning), var(--danger)); transition: width 0.3s; }
-    .status { font-size: 0.8rem; margin-top: 6px; }
-    .last-update { text-align: center; margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px; color: var(--muted); }
-    .last-update span { color: var(--accent); }
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #E2F8F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #99F6E4;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #14B8A6;
+    }
+    @keyframes pulseRing {
+      0% { transform: scale(0.85); opacity: 0.8; }
+      70% { transform: scale(1.6); opacity: 0; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    .pulse-ring::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 9999px;
+      background-color: currentColor;
+      opacity: 0.4;
+      animation: pulseRing 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    }
   </style>
 </head>
-<body>
-  <h1>Dashboard Suhu Farm Rencang</h1>
-  <div class="container">
-    <!-- Kandang Ayam -->
-    <div class="card">
-      <h3>Kandang Ayam (Suhu -3°C)</h3>
-      <div class="temp" id="temp-coop">--°C</div>
-      <div class="label" id="status-coop">--</div>
-      <div class="progress"><div class="progress-bar" style="--pct: 0"></div></div>
-    </div>
+<body class="min-h-screen antialiased selection:bg-teal-200 selection:text-teal-900">
 
-    <!-- Kolam Ikan -->
-    <div class="card">
-      <h3>Kolam Ikan (Suhu -5°C)</h3>
-      <div class="temp" id="temp-pond">--°C</div>
-      <div class="label" id="status-pond">--</div>
-      <div class="progress"><div class="progress-bar" style="--pct: 0"></div></div>
-    </div>
-
-    <!-- Tanam Ubi Jalar -->
-    <div class="card">
-      <h3>Tanam Ubi Jalar (Suhu +5°C)</h3>
-      <div class="temp" id="temp-ubi">--°C</div>
-      <div class="label" id="status-ubi">--</div>
-      <div class="progress"><div class="progress-bar" style="--pct: 0"></div></div>
-    </div>
-
-    <!-- Daftar Tugas -->
-    <div class="card">
-      <h3>Daftar Tugas</h3>
-      <div class="task-list" id="task-list">
-        <ul>
-          <!-- task items will be injected by JS -->
-        </ul>
+  <!-- Mobile Top Navbar -->
+  <header class="lg:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-teal-100 px-4 py-3 flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-white shadow-sm">
+        <!-- Sprout Icon -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10m0 0c0-3.866-3.134-7-7-7 0 3.866 3.134 7 7 7zm0 0c0-3.314 2.686-6 6-6 0 3.314-2.686 6-6 6z" />
+        </svg>
       </div>
-      <div class="reminder" id="reminder-banner" style="display:none; margin-top:12px; padding:8px; background:#ffdddd; border:1px solid #ff5555; border-radius:4px;">
-        <strong>⚠️ Tugas belum selesai:</strong> <span id="incomplete-count">0</span> tugas. <button onclick="remindMe()" style="background:#ff5555;color:white;padding:4px 8px;border:none;border-radius:3px;">Ikuti Sekarang</button>
+      <div>
+        <span class="font-bold text-slate-900 tracking-tight text-base">Rencang Farm</span>
+        <p class="text-[11px] text-slate-500 leading-none">Banjarasri, Sidoarjo</p>
       </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="manualRefresh()" class="p-2 rounded-xl bg-teal-50 text-teal-700 hover:bg-teal-100 transition" title="Refresh Data Sekarang">
+        <svg id="mobileRefreshIcon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+      <button onclick="toggleMobileSidebar()" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition" aria-label="Menu">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Sidebar Backdrop -->
+  <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/30 backdrop-blur-xs z-40 hidden lg:hidden"></div>
+
+  <div class="flex min-h-screen">
+    <!-- Left Sidebar Navigation (AgriFarm IoT Style) -->
+    <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-white border-r border-teal-100/80 flex flex-col justify-between transition-transform duration-300 -translate-x-full lg:translate-x-0 shadow-sm">
+      <div>
+        <!-- Brand Logo -->
+        <div class="px-6 py-6 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-teal-500/20">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10m0 0c0-3.866-3.134-7-7-7 0 3.866 3.134 7 7 7zm0 0c0-3.314 2.686-6 6-6 0 3.314-2.686 6-6 6z" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="font-bold text-lg text-slate-900 tracking-tight">Rencang Farm</h1>
+            <span class="text-[11px] font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">Microclimate IoT</span>
+          </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="px-4 mt-2 space-y-1.5" id="navMenu">
+          <button onclick="selectNav('all', this)" class="nav-btn active w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold bg-[#D3F4F6] text-teal-900 transition-all">
+            <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            <span>Dashboard</span>
+          </button>
+
+          <button onclick="selectNav('kandang', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
+            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>Zona Kandang</span>
+          </button>
+
+          <button onclick="selectNav('kolam', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
+            <svg class="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <span>Zona Kolam</span>
+          </button>
+
+          <button onclick="selectNav('ubi', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
+            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+            <span>Lahan Ubi Jalar</span>
+          </button>
+
+          <button onclick="openCalibrationModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
+            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+            <span>Kalibrasi Rumus</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Bottom Auto-Sync Card -->
+      <div class="p-4">
+        <div class="bg-gradient-to-br from-teal-50 to-cyan-50/80 border border-teal-100 rounded-2xl p-4 shadow-xs">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-bold text-teal-900 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+              Auto-Sync: Tiap 2 Jam
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-600 mb-2">Pembaruan otomatis berikutnya:</p>
+          <div id="countdownDisplay" class="font-mono text-lg font-bold text-teal-700 tracking-wider bg-white/90 rounded-xl py-1.5 px-3 text-center border border-teal-100 mb-3">
+            01:59:59
+          </div>
+          <button onclick="manualRefresh()" class="w-full py-2 px-3 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-[0.98] text-white text-xs font-semibold flex items-center justify-center gap-2 transition shadow-sm cursor-pointer">
+            <svg id="sidebarRefreshIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Refresh Data</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Canvas -->
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto w-full space-y-6">
+      
+      <!-- Top Header Section -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">RENCANG FARM DASHBOARD</h2>
+            <span id="apiStatusPill" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              API Open-Meteo Aktif
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-600 mt-1 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-teal-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Desa Banjarasri, Kec. Tanggulangin, Sidoarjo (-7.5075, 112.7578)
+          </p>
+        </div>
+
+        <!-- Right Date/Time & Calibration Trigger Pills -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="bg-white px-4 py-2.5 rounded-2xl shadow-card border border-white flex items-center gap-2.5 text-xs sm:text-sm font-medium text-slate-700">
+            <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span id="liveClockDisplay">Memuat waktu...</span>
+          </div>
+
+          <button onclick="openCalibrationModal()" class="bg-white hover:bg-teal-50 px-3.5 py-2.5 rounded-2xl shadow-card border border-white text-xs sm:text-sm font-semibold text-teal-800 flex items-center gap-1.5 transition cursor-pointer" title="Sesuaikan Konstanta Offset Termometer">
+            <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="hidden sm:inline">Kalibrasi</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 5 KPI Summary Cards Row -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        
+        <!-- Card 1: Suhu Banjarasri (Makro) -->
+        <div id="card-banjarasri" class="kpi-card bg-white rounded-2xl p-5 shadow-card hover:shadow-cardHover transition-all border border-white flex flex-col justify-between">
+          <div class="flex items-start justify-between gap-2">
+            <span class="text-xs font-semibold text-slate-500">Suhu Banjarasri (Makro)</span>
+            <span id="badge-banjarasri" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-700">Siang</span>
+          </div>
+          <div class="my-2.5 flex items-baseline gap-2">
+            <span id="val-banjarasri" class="text-3xl font-extrabold text-slate-900 tracking-tight">--.-°C</span>
+          </div>
+          <div class="text-[11px] text-slate-500 flex items-center justify-between pt-2 border-t border-slate-100">
+            <span>Data Open-Meteo</span>
+            <span id="sub-banjarasri" class="font-semibold text-slate-700">RH --%</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Suhu Kandang Ayam -->
+        <div id="card-kandang" class="kpi-card bg-white rounded-2xl p-5 shadow-card hover:shadow-cardHover transition-all border border-white flex flex-col justify-between">
+          <div class="flex items-start justify-between gap-2">
+            <span class="text-xs font-semibold text-slate-500">Suhu Kandang Ayam</span>
+            <span id="badge-kandang" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Normal</span>
+          </div>
+          <div class="my-2.5 flex items-baseline gap-2">
+            <span id="val-kandang" class="text-3xl font-extrabold text-slate-900 tracking-tight">--.-°C</span>
+            <span id="delta-kandang" class="text-xs font-bold text-amber-600">+0.0°</span>
+          </div>
+          <div class="text-[11px] text-slate-500 flex items-center justify-between pt-2 border-t border-slate-100">
+            <span>Atap Fiber • Plong</span>
+            <span id="sub-kandang" class="font-medium text-slate-600">Radiasi & Angin</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Suhu Kolam Ikan -->
+        <div id="card-kolam" class="kpi-card bg-white rounded-2xl p-5 shadow-card hover:shadow-cardHover transition-all border border-white flex flex-col justify-between">
+          <div class="flex items-start justify-between gap-2">
+            <span class="text-xs font-semibold text-slate-500">Suhu Kolam Ikan</span>
+            <span id="badge-kolam" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-800">Stabil</span>
+          </div>
+          <div class="my-2.5 flex items-baseline gap-2">
+            <span id="val-kolam" class="text-3xl font-extrabold text-slate-900 tracking-tight">--.-°C</span>
+            <span id="delta-kolam" class="text-xs font-bold text-cyan-600">-0.0°</span>
+          </div>
+          <div class="text-[11px] text-slate-500 flex items-center justify-between pt-2 border-t border-slate-100">
+            <span>Terpal Ø1m • Dinding 2m</span>
+            <span id="sub-kolam" class="font-medium text-slate-600">Thermal Lag</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Suhu Lahan Ubi Jalar -->
+        <div id="card-ubi" class="kpi-card bg-white rounded-2xl p-5 shadow-card hover:shadow-cardHover transition-all border border-white flex flex-col justify-between">
+          <div class="flex items-start justify-between gap-2">
+            <span class="text-xs font-semibold text-slate-500">Suhu Lahan Ubi Jalar</span>
+            <span id="badge-ubi" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Optimal</span>
+          </div>
+          <div class="my-2.5 flex items-baseline gap-2">
+            <span id="val-ubi" class="text-3xl font-extrabold text-slate-900 tracking-tight">--.-°C</span>
+            <span id="delta-ubi" class="text-xs font-bold text-emerald-600">+0.0°</span>
+          </div>
+          <div class="text-[11px] text-slate-500 flex items-center justify-between pt-2 border-t border-slate-100">
+            <span>Pekarangan Terbuka</span>
+            <span id="sub-ubi" class="font-medium text-slate-600">Kanopi & Tanah</span>
+          </div>
+        </div>
+
+        <!-- Card 5: Kondisi Cuaca & Angin -->
+        <div id="card-cuaca" class="kpi-card bg-white rounded-2xl p-5 shadow-card hover:shadow-cardHover transition-all border border-white flex flex-col justify-between">
+          <div class="flex items-start justify-between gap-2">
+            <span class="text-xs font-semibold text-slate-500">Cuaca & Angin Lokal</span>
+            <span id="badge-awan" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800">Awan --%</span>
+          </div>
+          <div class="my-2.5 flex items-baseline gap-2">
+            <span id="val-angin" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">-- <span class="text-sm font-semibold text-slate-500">km/j</span></span>
+          </div>
+          <div class="text-[11px] text-slate-500 flex items-center justify-between pt-2 border-t border-slate-100">
+            <span>Kelembapan: <strong id="val-rh" class="text-slate-700">--%</strong></span>
+            <span id="sub-radiasi" class="font-medium text-teal-700">-- W/m²</span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Real-Time Data Overview Charts -->
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base sm:text-lg font-bold text-slate-900">Real-Time Data Overview</h3>
+          <span id="lastUpdatedText" class="text-xs text-slate-500">Sinkronisasi terakhir: --:-- WIB</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <!-- Left Wide Card: 24-Hour Trend Chart (2-Hour Intervals) -->
+          <div class="lg:col-span-8 bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-white flex flex-col justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h4 class="font-bold text-slate-900 text-sm sm:text-base">Tren Suhu Mikro 24 Jam Terakhir (Interval 2 Jam)</h4>
+                <p class="text-xs text-slate-500">Fluktuasi suhu udara makro dibanding estimasi mikro tiap zona</p>
+              </div>
+              <select id="zoneFilterSelect" onchange="updateTrendFilter(this.value)" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
+                <option value="all">Semua Zona (4 Kurva)</option>
+                <option value="kandang">Kandang vs Banjarasri</option>
+                <option value="kolam">Kolam Ikan vs Banjarasri</option>
+                <option value="ubi">Ubi Jalar vs Banjarasri</option>
+              </select>
+            </div>
+            <div class="relative w-full h-64 sm:h-72">
+              <canvas id="trendChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Right Card: Current Zone Comparison Bar Chart -->
+          <div class="lg:col-span-4 bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-white flex flex-col justify-between">
+            <div class="mb-4">
+              <h4 class="font-bold text-slate-900 text-sm sm:text-base">Perbandingan Suhu Zona Saat Ini</h4>
+              <p class="text-xs text-slate-500">Selisih termal antar lingkungan mikro (°C)</p>
+            </div>
+            <div class="relative w-full h-64 sm:h-72">
+              <canvas id="comparisonBarChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Section: Interactive Farm Schematic Map & Automated Alerts -->
+      <section class="space-y-3 pb-6">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900">Peta Skema Zona & Peringatan Iklim Mikro</h3>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <!-- Left Card: Interactive Visual Schematic Map of Rencang Farm -->
+          <div class="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-white flex flex-col justify-between">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <div>
+                <h4 class="font-bold text-slate-900 text-sm sm:text-base">Denah Sensor Virtual — Rencang Farm</h4>
+                <p class="text-xs text-slate-500">Klik pin zona untuk melihat rincian rumus fisik & kalibrasi</p>
+              </div>
+              <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 border border-teal-100">
+                4 Titik Pemantauan Aktif
+              </span>
+            </div>
+
+            <!-- Interactive SVG Schematic Canvas -->
+            <div class="relative w-full rounded-2xl overflow-hidden border border-teal-100 bg-gradient-to-br from-[#EDF9F5] via-[#E4F6F8] to-[#E6F4EA] p-4 sm:p-5">
+              <!-- Decorative Grid & Compass -->
+              <div class="flex justify-between items-center text-[10px] font-semibold text-slate-400 mb-3">
+                <span>DESA BANJARASRI • TANGGULANGIN</span>
+                <span class="bg-white/80 px-2 py-0.5 rounded-md text-slate-600">🧭 UTARA ↑</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 relative z-10">
+                
+                <!-- Zone Pin 1: Kandang Ayam -->
+                <button onclick="inspectZone('kandang')" class="text-left group bg-white/95 hover:bg-white p-3.5 rounded-xl border border-amber-200/80 shadow-xs hover:shadow-md transition-all cursor-pointer">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                      <span class="relative w-2.5 h-2.5 rounded-full bg-amber-500 text-amber-500 pulse-ring"></span>
+                      Kandang Ayam
+                    </span>
+                    <span id="map-temp-kandang" class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-amber-100 text-amber-900">--.-°C</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 leading-relaxed">Atap fiber menyerap radiasi siang, sisi depan & belakang terbuka plong (lorong angin).</p>
+                </button>
+
+                <!-- Zone Pin 2: Kolam Ikan Terpal -->
+                <button onclick="inspectZone('kolam')" class="text-left group bg-white/95 hover:bg-white p-3.5 rounded-xl border border-cyan-200/80 shadow-xs hover:shadow-md transition-all cursor-pointer">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                      <span class="relative w-2.5 h-2.5 rounded-full bg-cyan-500 text-cyan-500 pulse-ring"></span>
+                      Kolam Terpal (Ø1m x 80cm)
+                    </span>
+                    <span id="map-temp-kolam" class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-cyan-100 text-cyan-900">--.-°C</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 leading-relaxed">Dikelilingi dinding 2m; terik langsung hanya pukul 09.00–15.00 WIB, inersia air tinggi.</p>
+                </button>
+
+                <!-- Zone Pin 3: Bedengan Ubi Jalar -->
+                <button onclick="inspectZone('ubi')" class="text-left group bg-white/95 hover:bg-white p-3.5 rounded-xl border border-emerald-200/80 shadow-xs hover:shadow-md transition-all cursor-pointer">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                      <span class="relative w-2.5 h-2.5 rounded-full bg-emerald-500 text-emerald-500 pulse-ring"></span>
+                      Bedengan Ubi Jalar
+                    </span>
+                    <span id="map-temp-ubi" class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-900">--.-°C</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 leading-relaxed">Pekarangan terbuka tanpa naungan, paparan matahari penuh & transpirasi daun aktif.</p>
+                </button>
+
+                <!-- Zone Pin 4: Referensi Cuaca Banjarasri -->
+                <button onclick="inspectZone('banjarasri')" class="text-left group bg-white/95 hover:bg-white p-3.5 rounded-xl border border-sky-200/80 shadow-xs hover:shadow-md transition-all cursor-pointer">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                      <span class="relative w-2.5 h-2.5 rounded-full bg-sky-500 text-sky-500 pulse-ring"></span>
+                      Referensi Banjarasri
+                    </span>
+                    <span id="map-temp-banjarasri" class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-sky-100 text-sky-900">--.-°C</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 leading-relaxed">Stasiun cuaca virtual satelit Open-Meteo (ketinggian 2m standar meteorologi).</p>
+                </button>
+
+              </div>
+
+              <!-- Selected Zone Formula Detail Bar -->
+              <div id="zoneFormulaDetail" class="mt-3.5 bg-white/90 backdrop-blur-xs rounded-xl p-3 border border-teal-100 text-xs text-slate-700 flex items-start gap-2.5">
+                <svg class="w-4 h-4 text-teal-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div id="zoneFormulaText">
+                  <strong class="text-slate-900">Info Pemodelan Iklim Mikro:</strong> Klik salah satu kartu zona di atas untuk melihat rincian variabel fisik dan rumus yang sedang diterapkan.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Card: Automated Alerts & Sync Log -->
+          <div class="lg:col-span-5 bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-white flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h4 class="font-bold text-slate-900 text-sm sm:text-base">Peringatan & Rekomendasi Otomatis</h4>
+                  <p class="text-xs text-slate-500">Analisis kondisi ternak, ikan & tanaman saat ini</p>
+                </div>
+                <span id="alertCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800">4 Info</span>
+              </div>
+
+              <!-- Dynamic Alert List -->
+              <div id="alertsContainer" class="space-y-3">
+                <!-- Populated dynamically by JS -->
+              </div>
+            </div>
+
+            <!-- Sync Schedule Footer -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+              <span>Interval Tarik Data: <strong class="text-slate-700">2 Jam (7.200 dtk)</strong></span>
+              <span id="syncModeTag" class="font-semibold text-teal-700">Live API</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Calibration & Formula Explanation Modal -->
+  <div id="calibrationModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-teal-100 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-lg font-extrabold text-slate-900">Kalibrasi Offset Iklim Mikro</h3>
+          <p class="text-xs text-slate-500">Sesuaikan konstanta jika sudah dicek dengan termometer fisik</p>
+        </div>
+        <button onclick="closeCalibrationModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="calibrationForm" onsubmit="saveCalibration(event)" class="mt-4 space-y-4">
+        <!-- Kandang Offset -->
+        <div class="bg-amber-50/60 border border-amber-100 rounded-2xl p-3.5">
+          <div class="flex justify-between items-center mb-1">
+            <label for="inputKandangRoof" class="text-xs font-bold text-amber-950">Panas Maksimal Atap Fiber Kandang (°C)</label>
+            <span id="labelKandangRoof" class="text-xs font-extrabold text-amber-700">+4.5°C</span>
+          </div>
+          <p class="text-[11px] text-slate-600 mb-2">Default +4.5°C (fiber gelap/buram). Ubah ke +6.0°C jika fiber bening transparan.</p>
+          <input type="range" id="inputKandangRoof" min="1.0" max="7.5" step="0.1" value="4.5" oninput="document.getElementById('labelKandangRoof').textContent = '+' + Number(this.value).toFixed(1) + '°C'" class="w-full accent-amber-600 cursor-pointer" />
+        </div>
+
+        <!-- Kolam Offset -->
+        <div class="bg-cyan-50/60 border border-cyan-100 rounded-2xl p-3.5">
+          <div class="flex justify-between items-center mb-1">
+            <label for="inputKolamBase" class="text-xs font-bold text-cyan-950">Koreksi Pendinginan Dasar Air Kolam (°C)</label>
+            <span id="labelKolamBase" class="text-xs font-extrabold text-cyan-700">-1.8°C</span>
+          </div>
+          <p class="text-[11px] text-slate-600 mb-2">Default -1.8°C karena bayangan dinding 2m & penguapan permukaan kolam terpal Ø1m.</p>
+          <input type="range" id="inputKolamBase" min="-4.0" max="0.5" step="0.1" value="-1.8" oninput="document.getElementById('labelKolamBase').textContent = Number(this.value).toFixed(1) + '°C'" class="w-full accent-cyan-600 cursor-pointer" />
+        </div>
+
+        <!-- Ubi Jalar Offset -->
+        <div class="bg-emerald-50/60 border border-emerald-100 rounded-2xl p-3.5">
+          <div class="flex justify-between items-center mb-1">
+            <label for="inputUbiSolar" class="text-xs font-bold text-emerald-950">Pemanasan Radiasi Lahan Ubi Jalar (°C)</label>
+            <span id="labelUbiSolar" class="text-xs font-extrabold text-emerald-700">+3.2°C</span>
+          </div>
+          <p class="text-[11px] text-slate-600 mb-2">Default +3.2°C pada pekarangan terbuka tanpa teduhan (dikurangi transpirasi daun & angin).</p>
+          <input type="range" id="inputUbiSolar" min="0.5" max="6.0" step="0.1" value="3.2" oninput="document.getElementById('labelUbiSolar').textContent = '+' + Number(this.value).toFixed(1) + '°C'" class="w-full accent-emerald-600 cursor-pointer" />
+        </div>
+
+        <div class="flex items-center justify-between pt-2 gap-3">
+          <button type="button" onclick="resetCalibration()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
+            Reset Default
+          </button>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeCalibrationModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+              Batal
+            </button>
+            <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 shadow-sm transition cursor-pointer">
+              Simpan & Hitung Ulang
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 
-  <div class="last-update">
-    Waktu update terakhir: <span id="last-update">--:--</span>
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-2xl shadow-lg flex items-center gap-2.5">
+    <span class="w-2 h-2 rounded-full bg-teal-400"></span>
+    <span id="toastMessage">Data berhasil diperbarui</span>
   </div>
 
   <script>
-    const apiUrl = 'https://api.open-meteo.com/v1/forecast?latitude=-7.49958&longitude=112.69992&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia/Jakarta';
-    const refreshInterval = 180000; // 3 jam
+    // =========================================================================
+    // 1. KONFIGURASI & STATE APLIKASI RENCANG FARM
+    // =========================================================================
+    const FARM_COORDS = {
+      lat: -7.5075,
+      lon: 112.7578,
+      name: 'Desa Banjarasri, Kec. Tanggulangin, Sidoarjo'
+    };
 
-    async function fetchData() {
+    // Interval Auto-Refresh = 2 Jam (7.200.000 milidetik)
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+    let nextSyncTimestamp = Date.now() + TWO_HOURS_MS;
+
+    // Konstanta default kalibrasi iklim mikro
+    const DEFAULT_OFFSETS = {
+      kandangRoof: 4.5, // Panas maksimal atap fiber (+4.5°C)
+      kolamBase: -1.8,  // Pendinginan alami kolam dinding 2m (-1.8°C)
+      ubiSolar: 3.2     // Pemanasan radiasi langsung pekarangan ubi jalar (+3.2°C)
+    };
+
+    let offsets = loadOffsets();
+    let weatherPayload = null;
+    let trendChartInstance = null;
+    let barChartInstance = null;
+    let currentTrendFilter = 'all';
+
+    // =========================================================================
+    // 2. MANAJEMEN PENYIMPANAN LOKAL (KALIBRASI)
+    // =========================================================================
+    function loadOffsets() {
       try {
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-        const cur = data.current;
-        if (!cur) throw new Error('No data');
-        return cur;
-      } catch (e) {
-        console.error(e);
-        return null;
-      }
-    }
-
-    function interpretSuhu(suhu, tipe) {
-      let idealMin, idealMax, label, warn;
-      if (tipe === 'coop') {
-        idealMin = 18; idealMax = 24;
-        if (suhu >= idealMin && suhu <= idealMax) label = 'Ideal (18-24°C)';
-        else if (suhu > idealMax && suhu <= 28) label = 'Tolerabel (24-28°C)';
-        else if (suhu > 28) label = 'Panas (>28°C) - risiko heat stress, nafsi makan turun, panting';
-        else label = 'Dingin (<18°C) - risiko nafsi makan turun, rentan pneumonia';
-      } else if (tipe === 'pond') {
-        idealMin = 26; idealMax = 30;
-        if (suhu >= idealMin && suhu <= idealMax) label = 'Ideal (26-30°C)';
-        else if (suhu >= 24 && suhu < idealMin) label = 'Tolerabel (24-30°C)';
-        else if (suhu > 30) label = 'Panas (>30°C) - oksigen turun, stres, risiko kematian';
-        else label = 'Dingin (<24°C) - pertumbuhan lambat';
-      } else if (tipe === 'ubi') {
-        idealMin = 21; idealMax = 27;
-        if (suhu >= idealMin && suhu <= idealMax) label = 'Ideal (21-27°C)';
-        else if (suhu > idealMax && suhu <= 28) label = 'Tolerabel (24-28°C)';
-        else if (suhu > 28) label = 'Panas (>30°C) - stres panas, penurunan fotosintesis, umbi kecil';
-        else label = 'Dingin (<24°C) - pertumbuhan lambat';
-      }
-      return { label, warn };
-    }
-
-    function updateProgress(card, pct) {
-      card.querySelector('.progress-bar').style.width = pct + '%';
-    }
-
-    async function render() {
-      const data = await fetchData();
-      if (!data) { setTimeout(render, 30000); return; }
-
-      const t = data.temperature_2m;
-      const rh = data.relative_humidity_2m;
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('id-ID') + ' WIB';
-
-      // Kandang ayam
-      const coop = t - 3;
-      const {label: coopLabel, warn: coopWarn} = interpretSuhu(coop, 'coop');
-      document.getElementById('temp-coop').textContent = coop.toFixed(1) + '°C';
-      document.getElementById('status-coop').textContent = coopLabel;
-      document.getElementById('status-coop').className = coopLabel.includes('Panas') ? 'panas' : coopLabel.includes('Dingin') ? 'dingin' : 'ideal';
-      updateProgress(document.querySelector('.card:nth-child(1)'), coop >= 18 && coop <= 24 ? 100 : coop >= 24 && coop <= 28 ? 70 : 30);
-
-      // Kolam ikan
-      const pond = t - 5;
-      const {label: pondLabel, warn: pondWarn} = interpretSuhu(pond, 'pond');
-      document.getElementById('temp-pond').textContent = pond.toFixed(1) + '°C';
-      document.getElementById('status-pond').textContent = pondLabel;
-      document.getElementById('status-pond').className = pondLabel.includes('Panas') ? 'panas' : pondLabel.includes('Dingin') ? 'dingin' : 'ideal';
-      updateProgress(document.querySelector('.card:nth-child(2)'), pond >= 26 && pond <= 30 ? 100 : pond >= 24 && pond <= 30 ? 70 : 30);
-
-      // Ubi jalar
-      const ubi = t + 5;
-      const {label: ubiLabel, warn: ubiWarn} = interpretSuhu(ubi, 'ubi');
-      document.getElementById('temp-ubi').textContent = ubi.toFixed(1) + '°C';
-      document.getElementById('status-ubi').textContent = ubiLabel;
-      document.getElementById('status-ubi').className = ubiLabel.includes('Panas') ? 'panas' : ubiLabel.includes('Dingin') ? 'dingin' : 'ideal';
-      updateProgress(document.querySelector('.card:nth-child(3)'), ubi >= 21 && ubi <= 27 ? 100 : ubi >= 24 && ubi <= 28 ? 70 : 30);
-
-      document.getElementById('last-update').textContent = timeStr;
-    }
-
-    // Initial render + auto refresh
-    render();
-    setInterval(render, refreshInterval);
-
-    // ==== Daftar Tugas (Task List) ====
-    // Jadwal default: 08:00 WIB (ubah jika perlu di setingan)
-    const TASK_KEY = 'rencang-farm-tasks-v2';
-    const tasks = [
-      { id: 1, text: "Membalik ubi yang sedang dijemur", time: "18:30", completed: false }
-    ];
-
-    const taskListEl = document.getElementById('task-list');
-    const reminderBanner = document.getElementById('reminder-banner');
-    const incompleteCountEl = document.getElementById('incomplete-count');
-
-    // Load tasks from localStorage (key baru, lama dibersihkan)
-    let tasksFromStorage = localStorage.getItem(TASK_KEY);
-    if (tasksFromStorage) {
-      try {
-        const parsed = JSON.parse(tasksFromStorage);
-        if (Array.isArray(parsed)) {
-          Object.assign(tasks, parsed);
+        const saved = localStorage.getItem('rencang_farm_offsets');
+        if (saved) {
+          return { ...DEFAULT_OFFSETS, ...JSON.parse(saved) };
         }
       } catch (e) {
-        console.error('Failed to parse tasks from localStorage', e);
+        console.warn('Gagal membaca localStorage:', e);
+      }
+      return { ...DEFAULT_OFFSETS };
+    }
+
+    function saveCalibration(event) {
+      event.preventDefault();
+      offsets.kandangRoof = parseFloat(document.getElementById('inputKandangRoof').value);
+      offsets.kolamBase = parseFloat(document.getElementById('inputKolamBase').value);
+      offsets.ubiSolar = parseFloat(document.getElementById('inputUbiSolar').value);
+
+      try {
+        localStorage.setItem('rencang_farm_offsets', JSON.stringify(offsets));
+      } catch (e) {
+        console.warn('Gagal menyimpan kalibrasi:', e);
+      }
+
+      closeCalibrationModal();
+      if (weatherPayload) {
+        renderDashboard(weatherPayload);
+      }
+      showToast('Kalibrasi offset berhasil disimpan & diterapkan.');
+    }
+
+    function resetCalibration() {
+      offsets = { ...DEFAULT_OFFSETS };
+      document.getElementById('inputKandangRoof').value = offsets.kandangRoof;
+      document.getElementById('labelKandangRoof').textContent = `+${offsets.kandangRoof.toFixed(1)}°C`;
+
+      document.getElementById('inputKolamBase').value = offsets.kolamBase;
+      document.getElementById('labelKolamBase').textContent = `${offsets.kolamBase.toFixed(1)}°C`;
+
+      document.getElementById('inputUbiSolar').value = offsets.ubiSolar;
+      document.getElementById('labelUbiSolar').textContent = `+${offsets.ubiSolar.toFixed(1)}°C`;
+    }
+
+    // =========================================================================
+    // 3. RUMUS PERHITUNGAN IKLIM MIKRO (4 ZONA)
+    // =========================================================================
+    /**
+     * Menghitung suhu 4 zona berdasarkan variabel meteorologi Open-Meteo
+     * @param {Object} params - { temp, humidity, cloudCover, windSpeed, isDay, hour, temp2hAgo, temp5hAgo }
+     */
+    function calculateMicroclimates({ temp, humidity, cloudCover, windSpeed, isDay, hour, temp2hAgo, temp5hAgo }) {
+      // Faktor cerah (0.0 sampai 1.0), hanya aktif pada siang hari (isDay === 1)
+      const faktorCerah = isDay === 1 ? Math.max(0, 1 - (cloudCover / 100)) : 0;
+
+      // A. Suhu Banjarasri (Makro Open-Meteo)
+      const suhuBanjarasri = Number(temp.toFixed(1));
+
+      // B. Suhu Kandang Ayam (Atap fiber, depan-belakang terbuka plong)
+      const panasAtap = offsets.kandangRoof * faktorCerah;
+      const pendinginanAnginKandang = Math.min(2.5, 0.12 * windSpeed);
+      const suhuKandang = Number((temp + panasAtap - pendinginanAnginKandang).toFixed(1));
+
+      // C. Suhu Kolam Ikan (Terpal bulat Ø1m x 80cm, dinding 2m -> terik jam 09.00-15.00)
+      const t2 = temp2hAgo !== undefined && temp2hAgo !== null ? temp2hAgo : temp;
+      const t5 = temp5hAgo !== undefined && temp5hAgo !== null ? temp5hAgo : temp;
+      const rataTertimbangAir = (0.25 * temp) + (0.35 * t2) + (0.40 * t5);
+      const kenaTerikKolam = (hour >= 9 && hour <= 15);
+      const bonusMatahariKolam = kenaTerikKolam ? (1.2 * faktorCerah) : 0;
+      const suhuKolam = Number((rataTertimbangAir + offsets.kolamBase + bonusMatahariKolam).toFixed(1));
+
+      // D. Suhu Tanaman Ubi Jalar (Pekarangan terbuka tanpa teduhan)
+      // Paparan surya langsung pada kanopi/tanah dikurangi angin & transpirasi daun
+      const panasSuryaUbi = offsets.ubiSolar * faktorCerah;
+      const pendinginanAnginUbi = Math.min(1.5, 0.08 * windSpeed);
+      const transpirasiDaun = 0.015 * humidity;
+      const suhuUbi = Number((temp + panasSuryaUbi - pendinginanAnginUbi - transpirasiDaun).toFixed(1));
+
+      return {
+        banjarasri: suhuBanjarasri,
+        kandang: suhuKandang,
+        kolam: suhuKolam,
+        ubi: suhuUbi,
+        faktorCerah,
+        kenaTerikKolam
+      };
+    }
+
+    // =========================================================================
+    // 4. INTEGRASI LIVE API OPEN-METEO & FALLBACK DATA
+    // =========================================================================
+    async function fetchBanjarasriWeather(isManual = false) {
+      const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${FARM_COORDS.lat}&longitude=${FARM_COORDS.lon}&current=temperature_2m,relative_humidity_2m,is_day,cloud_cover,wind_speed_10m,shortwave_radiation&hourly=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,is_day&past_hours=24&forecast_hours=2&timezone=Asia%2FBangkok`;
+
+      toggleRefreshSpin(true);
+      try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        weatherPayload = { source: 'live', raw: data };
+        updateApiStatusUI(true);
+        renderDashboard(weatherPayload);
+        if (isManual) showToast('Data cuaca Banjarasri berhasil diperbarui dari Open-Meteo.');
+      } catch (err) {
+        console.warn('Menggunakan data simulasi Banjarasri karena koneksi API gagal:', err);
+        weatherPayload = { source: 'fallback', raw: generateFallbackWeatherData() };
+        updateApiStatusUI(false);
+        renderDashboard(weatherPayload);
+        if (isManual) showToast('Mode Offline: Menampilkan profil cuaca Banjarasri tersimpan.');
+      } finally {
+        toggleRefreshSpin(false);
+        nextSyncTimestamp = Date.now() + TWO_HOURS_MS;
       }
     }
 
-    function renderTasks() {
-      if (!taskListEl) return;
-      taskListEl.innerHTML = '';
-      tasks.forEach(task => {
-        const li = document.createElement('li');
-        li.innerHTML = `<label><input type="checkbox" ${task.completed ? 'checked' : ''} data-id="${task.id}" /> <strong>${task.time}</strong> — ${task.text}</label>`;
-        taskListEl.appendChild(li);
+    function generateFallbackWeatherData() {
+      // Profil cuaca realistis Banjarasri, Tanggulangin jika browser sedang offline
+      const now = new Date();
+      const currentHour = now.getHours();
+      const hourlyTime = [];
+      const hourlyTemp = [];
+      const hourlyRh = [];
+      const hourlyCloud = [];
+      const hourlyWind = [];
+      const hourlyIsDay = [];
+
+      for (let i = 24; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 3600 * 1000);
+        const h = d.getHours();
+        const iso = d.toISOString().slice(0, 13) + ':00';
+        const isDay = (h >= 6 && h <= 17) ? 1 : 0;
+        // Kurva suhu khas dataran rendah Sidoarjo (26°C dini hari - 34°C siang)
+        const baseTemp = 30.0 + 4.2 * Math.sin(((h - 8) / 24) * 2 * Math.PI);
+        const rh = Math.round(72 - 22 * Math.sin(((h - 8) / 24) * 2 * Math.PI));
+        const cloud = h >= 11 && h <= 15 ? 35 : 50;
+        const wind = h >= 10 && h <= 16 ? 13.5 : 6.5;
+
+        hourlyTime.push(iso);
+        hourlyTemp.push(Number(baseTemp.toFixed(1)));
+        hourlyRh.push(rh);
+        hourlyCloud.push(cloud);
+        hourlyWind.push(wind);
+        hourlyIsDay.push(isDay);
+      }
+
+      const lastIdx = hourlyTemp.length - 1;
+      return {
+        current: {
+          time: hourlyTime[lastIdx],
+          temperature_2m: hourlyTemp[lastIdx],
+          relative_humidity_2m: hourlyRh[lastIdx],
+          is_day: hourlyIsDay[lastIdx],
+          cloud_cover: hourlyCloud[lastIdx],
+          wind_speed_10m: hourlyWind[lastIdx],
+          shortwave_radiation: hourlyIsDay[lastIdx] ? 640 : 0
+        },
+        hourly: {
+          time: hourlyTime,
+          temperature_2m: hourlyTemp,
+          relative_humidity_2m: hourlyRh,
+          cloud_cover: hourlyCloud,
+          wind_speed_10m: hourlyWind,
+          is_day: hourlyIsDay
+        }
+      };
+    }
+
+    // =========================================================================
+    // 5. RENDER KPI, GRAFIK, PETA SKEMA & PERINGATAN OTOMATIS
+    // =========================================================================
+    function renderDashboard(payload) {
+      const raw = payload.raw;
+      const cur = raw.current;
+      const hourly = raw.hourly;
+
+      // Cari indeks jam saat ini di array hourly
+      const currentHourStr = cur.time.slice(0, 13);
+      let curIdx = hourly.time.findIndex(t => t.startsWith(currentHourStr));
+      if (curIdx === -1) curIdx = hourly.time.length - 1;
+
+      const curHour = parseInt(cur.time.split('T')[1].split(':')[0], 10);
+      const temp2hAgo = curIdx >= 2 ? hourly.temperature_2m[curIdx - 2] : cur.temperature_2m;
+      const temp5hAgo = curIdx >= 5 ? hourly.temperature_2m[curIdx - 5] : cur.temperature_2m;
+
+      // Hitung suhu saat ini untuk 4 zona
+      const nowCalc = calculateMicroclimates({
+        temp: cur.temperature_2m,
+        humidity: cur.relative_humidity_2m,
+        cloudCover: cur.cloud_cover,
+        windSpeed: cur.wind_speed_10m,
+        isDay: cur.is_day,
+        hour: curHour,
+        temp2hAgo,
+        temp5hAgo
       });
-      const incompleteCount = tasks.filter(t => !t.completed).length;
-      if (incompleteCountEl) incompleteCountEl.textContent = incompleteCount;
-      if (reminderBanner) reminderBanner.style.display = incompleteCount > 0 ? 'block' : 'none';
+
+      // Update KPI Cards
+      updateKpiCards(cur, nowCalc);
+
+      // Update Map Schematic Badges
+      document.getElementById('map-temp-banjarasri').textContent = `${nowCalc.banjarasri.toFixed(1)}°C`;
+      document.getElementById('map-temp-kandang').textContent = `${nowCalc.kandang.toFixed(1)}°C`;
+      document.getElementById('map-temp-kolam').textContent = `${nowCalc.kolam.toFixed(1)}°C`;
+      document.getElementById('map-temp-ubi').textContent = `${nowCalc.ubi.toFixed(1)}°C`;
+
+      // Siapkan data 24 jam terakhir dalam interval 2 jam (13 titik: -24j s/d Sekarang)
+      const series2h = buildTwoHourSeries(hourly, curIdx);
+      renderTrendChart(series2h);
+      renderComparisonBarChart(nowCalc);
+
+      // Render Peringatan & Rekomendasi Otomatis
+      renderAutomatedAlerts(cur, nowCalc);
+
+      // Update timestamp sinkronisasi terakhir
+      const nowTime = new Date();
+      const hh = String(nowTime.getHours()).padStart(2, '0');
+      const mm = String(nowTime.getMinutes()).padStart(2, '0');
+      document.getElementById('lastUpdatedText').textContent = `Sinkronisasi terakhir: ${hh}:${mm} WIB`;
     }
 
-    function remindMe() {
-      alert('Ingat, selesaikan tugas belum selesai!');
+    function updateKpiCards(cur, calc) {
+      // 1. Banjarasri
+      document.getElementById('val-banjarasri').textContent = `${calc.banjarasri.toFixed(1)}°C`;
+      document.getElementById('sub-banjarasri').textContent = `RH ${cur.relative_humidity_2m}%`;
+      const badgeBjr = document.getElementById('badge-banjarasri');
+      badgeBjr.textContent = cur.is_day === 1 ? 'Siang' : 'Malam';
+      badgeBjr.className = cur.is_day === 1
+        ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-700'
+        : 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700';
+
+      // 2. Kandang Ayam
+      document.getElementById('val-kandang').textContent = `${calc.kandang.toFixed(1)}°C`;
+      const dKandang = (calc.kandang - calc.banjarasri).toFixed(1);
+      document.getElementById('delta-kandang').textContent = `${dKandang >= 0 ? '+' : ''}${dKandang}°`;
+      const badgeKdg = document.getElementById('badge-kandang');
+      if (calc.kandang >= 34.5) {
+        badgeKdg.textContent = 'Waspada Panas';
+        badgeKdg.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700';
+      } else if (calc.kandang <= 25.0) {
+        badgeKdg.textContent = 'Sejuk / Dingin';
+        badgeKdg.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-700';
+      } else {
+        badgeKdg.textContent = 'Nyaman';
+        badgeKdg.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700';
+      }
+
+      // 3. Kolam Ikan
+      document.getElementById('val-kolam').textContent = `${calc.kolam.toFixed(1)}°C`;
+      const dKolam = (calc.kolam - calc.banjarasri).toFixed(1);
+      document.getElementById('delta-kolam').textContent = `${dKolam >= 0 ? '+' : ''}${dKolam}°`;
+      const badgeKlm = document.getElementById('badge-kolam');
+      if (calc.kolam >= 31.5) {
+        badgeKlm.textContent = 'Air Hangat';
+        badgeKlm.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800';
+      } else if (calc.kolam < 25.5) {
+        badgeKlm.textContent = 'Air Dingin';
+        badgeKlm.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800';
+      } else {
+        badgeKlm.textContent = 'Ideal Ikan';
+        badgeKlm.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-800';
+      }
+
+      // 4. Lahan Ubi Jalar
+      document.getElementById('val-ubi').textContent = `${calc.ubi.toFixed(1)}°C`;
+      const dUbi = (calc.ubi - calc.banjarasri).toFixed(1);
+      document.getElementById('delta-ubi').textContent = `${dUbi >= 0 ? '+' : ''}${dUbi}°`;
+      const badgeUbi = document.getElementById('badge-ubi');
+      if (calc.ubi >= 34.0) {
+        badgeUbi.textContent = 'Terik Tinggi';
+        badgeUbi.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800';
+      } else {
+        badgeUbi.textContent = 'Optimal';
+        badgeUbi.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800';
+      }
+
+      // 5. Cuaca & Angin
+      document.getElementById('val-angin').innerHTML = `${cur.wind_speed_10m.toFixed(1)} <span class="text-sm font-semibold text-slate-500">km/j</span>`;
+      document.getElementById('val-rh').textContent = `${cur.relative_humidity_2m}%`;
+      document.getElementById('badge-awan').textContent = `Awan ${cur.cloud_cover}%`;
+      const rad = cur.shortwave_radiation !== undefined ? Math.round(cur.shortwave_radiation) : (cur.is_day ? 520 : 0);
+      document.getElementById('sub-radiasi').textContent = `${rad} W/m²`;
     }
 
-    // Event listener for checkbox changes
-    if (taskListEl) {
-      taskListEl.addEventListener('change', (e) => {
-        if (e.target.type === 'checkbox') {
-          const id = parseInt(e.target.dataset.id);
-          const task = tasks.find(t => t.id === id);
-          if (task) {
-            task.completed = e.target.checked;
-            localStorage.setItem(TASK_KEY, JSON.stringify(tasks));
-            renderTasks();
+    function buildTwoHourSeries(hourly, endIdx) {
+      const labels = [];
+      const banjarasri = [];
+      const kandang = [];
+      const kolam = [];
+      const ubi = [];
+
+      // Mundur maksimal 24 jam dengan lompatan 2 jam
+      const startIdx = Math.max(0, endIdx - 24);
+      for (let idx = startIdx; idx <= endIdx; idx += 2) {
+        const timeStr = hourly.time[idx];
+        const hour = parseInt(timeStr.split('T')[1].split(':')[0], 10);
+        const label = `${String(hour).padStart(2, '0')}:00`;
+
+        const tNow = hourly.temperature_2m[idx];
+        const t2 = idx >= 2 ? hourly.temperature_2m[idx - 2] : tNow;
+        const t5 = idx >= 5 ? hourly.temperature_2m[idx - 5] : tNow;
+
+        const res = calculateMicroclimates({
+          temp: tNow,
+          humidity: hourly.relative_humidity_2m[idx],
+          cloudCover: hourly.cloud_cover[idx],
+          windSpeed: hourly.wind_speed_10m[idx],
+          isDay: hourly.is_day[idx],
+          hour,
+          temp2hAgo: t2,
+          temp5hAgo: t5
+        });
+
+        labels.push(label);
+        banjarasri.push(res.banjarasri);
+        kandang.push(res.kandang);
+        kolam.push(res.kolam);
+        ubi.push(res.ubi);
+      }
+
+      return { labels, banjarasri, kandang, kolam, ubi };
+    }
+
+    function renderTrendChart(series) {
+      const ctx = document.getElementById('trendChart').getContext('2d');
+
+      const allDatasets = [
+        {
+          key: 'banjarasri',
+          label: 'Banjarasri (Makro)',
+          data: series.banjarasri,
+          borderColor: '#0284C7',
+          backgroundColor: 'rgba(2, 132, 199, 0.08)',
+          borderWidth: 2.2,
+          borderDash: [5, 4],
+          tension: 0.4,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          fill: false
+        },
+        {
+          key: 'kandang',
+          label: 'Kandang Ayam (Fiber)',
+          data: series.kandang,
+          borderColor: '#F59E0B',
+          backgroundColor: 'rgba(245, 158, 11, 0.12)',
+          borderWidth: 2.8,
+          tension: 0.4,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
+          fill: false
+        },
+        {
+          key: 'kolam',
+          label: 'Kolam Ikan (Terpal Ø1m)',
+          data: series.kolam,
+          borderColor: '#06B6D4',
+          backgroundColor: 'rgba(6, 182, 212, 0.12)',
+          borderWidth: 2.8,
+          tension: 0.4,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
+          fill: false
+        },
+        {
+          key: 'ubi',
+          label: 'Ubi Jalar (Terbuka)',
+          data: series.ubi,
+          borderColor: '#10B981',
+          backgroundColor: 'rgba(16, 185, 129, 0.12)',
+          borderWidth: 2.6,
+          tension: 0.4,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
+          fill: false
+        }
+      ];
+
+      const filteredDatasets = currentTrendFilter === 'all'
+        ? allDatasets
+        : allDatasets.filter(ds => ds.key === 'banjarasri' || ds.key === currentTrendFilter);
+
+      if (trendChartInstance) {
+        trendChartInstance.destroy();
+      }
+
+      trendChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: series.labels,
+          datasets: filteredDatasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              align: 'end',
+              labels: {
+                usePointStyle: true,
+                boxWidth: 8,
+                font: { family: 'Inter', size: 11, weight: '600' },
+                color: '#475569'
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.92)',
+              titleFont: { family: 'Inter', size: 12, weight: '700' },
+              bodyFont: { family: 'Inter', size: 12 },
+              padding: 10,
+              cornerRadius: 12,
+              callbacks: {
+                label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}°C`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                font: { family: 'Inter', size: 11 },
+                color: '#64748B'
+              }
+            },
+            y: {
+              grid: { color: '#F1F5F9' },
+              ticks: {
+                font: { family: 'Inter', size: 11 },
+                color: '#64748B',
+                callback: (v) => `${v}°`
+              }
+            }
           }
         }
       });
     }
 
-    // Initial render of tasks
-    renderTasks();
+    function updateTrendFilter(val) {
+      currentTrendFilter = val;
+      if (weatherPayload) {
+        renderDashboard(weatherPayload);
+      }
+    }
+
+    function renderComparisonBarChart(calc) {
+      const ctx = document.getElementById('comparisonBarChart').getContext('2d');
+
+      if (barChartInstance) {
+        barChartInstance.destroy();
+      }
+
+      // Custom plugin untuk menampilkan label suhu tepat di atas setiap batang
+      const topLabelPlugin = {
+        id: 'topLabelPlugin',
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          ctx.save();
+          ctx.font = '700 12px Inter, sans-serif';
+          ctx.fillStyle = '#0F172A';
+          ctx.textAlign = 'center';
+          chart.getDatasetMeta(0).data.forEach((bar, index) => {
+            const val = chart.data.datasets[0].data[index];
+            ctx.fillText(`${val.toFixed(1)}°C`, bar.x, bar.y - 8);
+          });
+          ctx.restore();
+        }
+      };
+
+      barChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Banjarasri', 'Kandang', 'Kolam', 'Ubi Jalar'],
+          datasets: [{
+            label: 'Suhu Saat Ini (°C)',
+            data: [calc.banjarasri, calc.kandang, calc.kolam, calc.ubi],
+            backgroundColor: [
+              '#0EA5E9', // Sky Blue
+              '#F59E0B', // Warm Amber
+              '#06B6D4', // Cyan
+              '#10B981'  // Emerald
+            ],
+            borderRadius: 10,
+            borderSkipped: false,
+            barPercentage: 0.58
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: {
+            padding: { top: 24 }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.92)',
+              cornerRadius: 10,
+              callbacks: {
+                label: (ctx) => ` Suhu Estimasi: ${ctx.parsed.y.toFixed(1)}°C`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                font: { family: 'Inter', size: 11, weight: '600' },
+                color: '#475569'
+              }
+            },
+            y: {
+              min: 20,
+              max: 42,
+              grid: { color: '#F1F5F9' },
+              ticks: {
+                font: { family: 'Inter', size: 11 },
+                color: '#64748B',
+                callback: (v) => `${v}°`
+              }
+            }
+          }
+        },
+        plugins: [topLabelPlugin]
+      });
+    }
+
+    function renderAutomatedAlerts(cur, calc) {
+      const container = document.getElementById('alertsContainer');
+      const alerts = [];
+
+      // 1. Evaluasi Kandang Ayam
+      if (calc.kandang >= 34.5) {
+        alerts.push({
+          type: 'warning',
+          bg: 'bg-amber-50 border-amber-200',
+          iconColor: 'text-amber-600 bg-amber-100',
+          title: `Kandang Ayam Panas (${calc.kandang.toFixed(1)}°C)`,
+          desc: 'Radiasi atap fiber tinggi. Pastikan sirkulasi depan-belakang tidak terhalang & tambah air minum.'
+        });
+      } else {
+        alerts.push({
+          type: 'ok',
+          bg: 'bg-teal-50/70 border-teal-100',
+          iconColor: 'text-teal-600 bg-teal-100',
+          title: `Sirkulasi Kandang Stabil (${calc.kandang.toFixed(1)}°C)`,
+          desc: `Hembusan angin ${cur.wind_speed_10m} km/j membantu membuang panas atap fiber secara alami.`
+        });
+      }
+
+      // 2. Evaluasi Kolam Ikan Terpal
+      if (calc.kolam >= 27.0 && calc.kolam <= 31.0) {
+        alerts.push({
+          type: 'ok',
+          bg: 'bg-cyan-50/70 border-cyan-100',
+          iconColor: 'text-cyan-600 bg-cyan-100',
+          title: `Jendela Pakan Ikan Optimal (${calc.kolam.toFixed(1)}°C)`,
+          desc: 'Metabolisme ikan aktif di suhu air 27–31°C. Pemberian pakan dapat dilakukan normal.'
+        });
+      } else if (calc.kolam > 31.0) {
+        alerts.push({
+          type: 'warning',
+          bg: 'bg-amber-50 border-amber-200',
+          iconColor: 'text-amber-600 bg-amber-100',
+          title: `Air Kolam Menghangat (${calc.kolam.toFixed(1)}°C)`,
+          desc: 'Akumulasi panas matahari jam 09–15. Nyalakan aerasi lebih kuat untuk menjaga oksigen terlarut.'
+        });
+      } else {
+        alerts.push({
+          type: 'info',
+          bg: 'bg-sky-50/70 border-sky-100',
+          iconColor: 'text-sky-600 bg-sky-100',
+          title: `Suhu Air Kolam Sejuk (${calc.kolam.toFixed(1)}°C)`,
+          desc: 'Dinding 2m menahan panas berlebih; kurangi porsi pakan jika suhu air di bawah 26°C.'
+        });
+      }
+
+      // 3. Evaluasi Lahan Ubi Jalar
+      if (calc.ubi >= 34.0 && cur.relative_humidity_2m < 60) {
+        alerts.push({
+          type: 'warning',
+          bg: 'bg-emerald-50 border-emerald-200',
+          iconColor: 'text-emerald-700 bg-emerald-100',
+          title: `Evapotranspirasi Ubi Jalar Tinggi (${calc.ubi.toFixed(1)}°C)`,
+          desc: 'Lahan terbuka terpapar matahari penuh. Jadwalkan penyiraman sore hari agar umbi tetap lembap.'
+        });
+      } else {
+        alerts.push({
+          type: 'ok',
+          bg: 'bg-emerald-50/60 border-emerald-100',
+          iconColor: 'text-emerald-600 bg-emerald-100',
+          title: `Lahan Ubi Jalar Kondusif (${calc.ubi.toFixed(1)}°C)`,
+          desc: 'Fotosintesis kanopi terbuka berjalan optimal dengan kelembapan udara ' + cur.relative_humidity_2m + '%.'
+        });
+      }
+
+      document.getElementById('alertCountBadge').textContent = `${alerts.length} Info`;
+
+      container.innerHTML = alerts.map(item => `
+        <div class="p-3 rounded-xl border ${item.bg} flex items-start gap-3 transition-all">
+          <div class="w-8 h-8 rounded-lg ${item.iconColor} flex items-center justify-center shrink-0 mt-0.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h5 class="text-xs font-bold text-slate-900">${item.title}</h5>
+            <p class="text-[11px] text-slate-600 mt-0.5 leading-relaxed">${item.desc}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // =========================================================================
+    // 6. INTERAKSI UI (PETA ZONA, NAVIGASI, TIMER & MODAL)
+    // =========================================================================
+    function inspectZone(zoneKey) {
+      const detailBox = document.getElementById('zoneFormulaText');
+      const explanations = {
+        kandang: `<strong>Rumus Kandang Ayam:</strong> <code>T_luar + (${offsets.kandangRoof.toFixed(1)} × Faktor_Cerah) - min(2.5, 0.12 × Angin)</code>. Memperhitungkan efek rumah kaca atap fiber saat terik serta pendinginan lorong angin depan-belakang.`,
+        kolam: `<strong>Rumus Kolam Ikan (Ø1m x 80cm):</strong> <code>(0.25·T_0 + 0.35·T_-2j + 0.40·T_-5j) ${offsets.kolamBase.toFixed(1)} + Bonus_Terik(09–15)</code>. Mensimulasikan lambatnya perubahan suhu 628L air dan bayangan dinding 2m.`,
+        ubi: `<strong>Rumus Ubi Jalar (Terbuka):</strong> <code>T_luar + (${offsets.ubiSolar.toFixed(1)} × Faktor_Cerah) - min(1.5, 0.08 × Angin) - (0.015 × RH)</code>. Menghitung paporan surya langsung tanpa naungan dikurangi pendinginan transpirasi daun.`,
+        banjarasri: `<strong>Data Referensi Banjarasri:</strong> Diambil langsung dari satelit cuaca Open-Meteo untuk koordinat <code>-7.5075, 112.7578</code> setiap interval 2 jam sekali.`
+      };
+      detailBox.innerHTML = explanations[zoneKey] || explanations.banjarasri;
+    }
+
+    function selectNav(zone, btnEl) {
+      // Update active button style
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-[#D3F4F6]', 'text-teal-900', 'font-semibold');
+        btn.classList.add('text-slate-600', 'font-medium');
+      });
+      btnEl.classList.remove('text-slate-600', 'font-medium');
+      btnEl.classList.add('bg-[#D3F4F6]', 'text-teal-900', 'font-semibold');
+
+      // Highlight matching KPI card & filter chart
+      document.querySelectorAll('.kpi-card').forEach(card => {
+        card.classList.remove('ring-2', 'ring-teal-500');
+      });
+
+      if (zone !== 'all') {
+        const targetCard = document.getElementById(`card-${zone}`);
+        if (targetCard) {
+          targetCard.classList.add('ring-2', 'ring-teal-500');
+          targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        document.getElementById('zoneFilterSelect').value = zone;
+        updateTrendFilter(zone);
+        inspectZone(zone);
+      } else {
+        document.getElementById('zoneFilterSelect').value = 'all';
+        updateTrendFilter('all');
+      }
+
+      // Tutup sidebar otomatis di perangkat mobile
+      if (window.innerWidth < 1024) {
+        toggleMobileSidebar(false);
+      }
+    }
+
+    function toggleMobileSidebar(forceState) {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      const isOpen = !sidebar.classList.contains('-translate-x-full');
+      const shouldOpen = forceState !== undefined ? forceState : !isOpen;
+
+      if (shouldOpen) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+
+    function openCalibrationModal() {
+      // Sinkronkan slider dengan nilai offsets terbaru
+      document.getElementById('inputKandangRoof').value = offsets.kandangRoof;
+      document.getElementById('labelKandangRoof').textContent = `+${offsets.kandangRoof.toFixed(1)}°C`;
+
+      document.getElementById('inputKolamBase').value = offsets.kolamBase;
+      document.getElementById('labelKolamBase').textContent = `${offsets.kolamBase.toFixed(1)}°C`;
+
+      document.getElementById('inputUbiSolar').value = offsets.ubiSolar;
+      document.getElementById('labelUbiSolar').textContent = `+${offsets.ubiSolar.toFixed(1)}°C`;
+
+      const modal = document.getElementById('calibrationModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeCalibrationModal() {
+      const modal = document.getElementById('calibrationModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function manualRefresh() {
+      fetchBanjarasriWeather(true);
+    }
+
+    function toggleRefreshSpin(spinning) {
+      const icons = [document.getElementById('sidebarRefreshIcon'), document.getElementById('mobileRefreshIcon')];
+      icons.forEach(icon => {
+        if (!icon) return;
+        if (spinning) icon.classList.add('animate-spin');
+        else icon.classList.remove('animate-spin');
+      });
+    }
+
+    function updateApiStatusUI(isLive) {
+      const pill = document.getElementById('apiStatusPill');
+      const syncTag = document.getElementById('syncModeTag');
+      if (isLive) {
+        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200';
+        pill.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span>API Open-Meteo Aktif';
+        syncTag.textContent = 'Live API Open-Meteo';
+      } else {
+        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200';
+        pill.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span>Mode Simulasi Lokal';
+        syncTag.textContent = 'Offline Fallback';
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      document.getElementById('toastMessage').textContent = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3200);
+    }
+
+    // Jam Real-Time & Hitung Mundur Auto-Sync 2 Jam
+    function startClocksAndAutoSync() {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+      function tick() {
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = months[now.getMonth()];
+        const year = now.getFullYear();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+
+        document.getElementById('liveClockDisplay').textContent = `${day} ${month} ${year} | ${hh}:${mm}:${ss} WIB`;
+
+        // Hitung mundur 2 jam
+        const remainingMs = Math.max(0, nextSyncTimestamp - Date.now());
+        const totalSec = Math.floor(remainingMs / 1000);
+        const remH = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+        const remM = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+        const remS = String(totalSec % 60).padStart(2, '0');
+        document.getElementById('countdownDisplay').textContent = `${remH}:${remM}:${remS}`;
+
+        if (remainingMs <= 0) {
+          fetchBanjarasriWeather(false);
+        }
+      }
+
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    // Inisialisasi saat halaman dimuat
+    window.addEventListener('DOMContentLoaded', () => {
+      startClocksAndAutoSync();
+      fetchBanjarasriWeather(false);
+    });
   </script>
 </body>
 </html>
