@@ -60,14 +60,6 @@
       <div class="temp" id="temp-ubi">--°C</div>
       <div class="label" id="status-ubi">--</div>
       <div class="progress"><div class="progress-bar" style="--pct: 0"></div></div>
-
-      <!-- Daftar Tugas Tanam Ubi Jalar -->
-      <div class="task-list">
-        <ul>
-          <li><strong>Tugas:</strong> Panen Ubi keras dari 8 polibag, cuci bersih → kupas → potong ±2 mm → susun di kanopi/HVS.</li>
-          <li><strong>Pantas:</strong> Suhu tanam ubi jalar = realtime +5°C. Ideal 21–27°C, tolerabel 24–28°C, panas >28°C (stres panas, penurunan fotosintesis, umbi kecil), dingin <24°C (pertumbuhan lambat).</li>
-        </ul>
-      </div>
     </div>
 
     <!-- Daftar Tugas -->
@@ -174,24 +166,24 @@
     setInterval(render, refreshInterval);
 
     // ==== Daftar Tugas (Task List) ====
+    // Jadwal default: 08:00 WIB (ubah jika perlu di setingan)
+    const TASK_KEY = 'rencang-farm-tasks-v2';
     const tasks = [
-      { id: 1, text: "Balik (jemur) Ubi yang sudah dijemur agar lebih mudah dipetik.", completed: false },
-      { id: 2, text: "Jika suhu real-time −3°C sudah >28°C → heat stress, nafsi makan turun, panting.", completed: false },
-      { id: 3, text: "Cek warna air kolam ikan — masih hijau muda?", completed: false },
-      { id: 4, text: "Jika suhu real-time −5°C sudah >30°C → oksigen air menurun, stres, risiko kematian.", completed: false },
-      { id: 5, text: "Panen Ubi keras dari 8 polibag, cuci bersih → kupas → potong ±2 mm → susun di kanopi/HVS.", completed: false },
-      { id: 6, text: "Suhu tanam ubi jalar = realtime +5°C. Ideal 21–27°C, tolerabel 24–28°C, panas >28°C (stres panas, penurunan fotosintesis, umbi kecil), dingin <24°C (pertumbuhan lambat).", completed: false }
+      { id: 1, text: "Membalik ubi yang sedang dijemur", time: "08:00", completed: false }
     ];
 
     const taskListEl = document.getElementById('task-list');
     const reminderBanner = document.getElementById('reminder-banner');
     const incompleteCountEl = document.getElementById('incomplete-count');
 
-    // Load tasks from localStorage
-    let tasksFromStorage = localStorage.getItem('tasks');
+    // Load tasks from localStorage (key baru, lama dibersihkan)
+    let tasksFromStorage = localStorage.getItem(TASK_KEY);
     if (tasksFromStorage) {
       try {
-        Object.assign(tasks, JSON.parse(tasksFromStorage));
+        const parsed = JSON.parse(tasksFromStorage);
+        if (Array.isArray(parsed)) {
+          Object.assign(tasks, parsed);
+        }
       } catch (e) {
         console.error('Failed to parse tasks from localStorage', e);
       }
@@ -202,10 +194,9 @@
       taskListEl.innerHTML = '';
       tasks.forEach(task => {
         const li = document.createElement('li');
-        li.innerHTML = `<label><input type="checkbox" ${task.completed ? 'checked' : ''} data-id="${task.id}" /> ${task.text}</label>`;
+        li.innerHTML = `<label><input type="checkbox" ${task.completed ? 'checked' : ''} data-id="${task.id}" /> <strong>${task.time}</strong> — ${task.text}</label>`;
         taskListEl.appendChild(li);
       });
-      // Update reminder banner
       const incompleteCount = tasks.filter(t => !t.completed).length;
       if (incompleteCountEl) incompleteCountEl.textContent = incompleteCount;
       if (reminderBanner) reminderBanner.style.display = incompleteCount > 0 ? 'block' : 'none';
@@ -223,7 +214,7 @@
           const task = tasks.find(t => t.id === id);
           if (task) {
             task.completed = e.target.checked;
-            localStorage.setItem('tasks', JSON.stringify(tasks));
+            localStorage.setItem(TASK_KEY, JSON.stringify(tasks));
             renderTasks();
           }
         }
