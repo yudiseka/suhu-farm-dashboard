@@ -1,0 +1,152 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-23T09:58:11Z",
+  "updatedBy": "seed",
+  "farm": {
+    "name": "Rencang Farm",
+    "coords": {
+      "lat": -7.5075,
+      "lon": 112.7578
+    },
+    "location": "Desa Banjarasri, Kec. Tanggulangin, Sidoarjo",
+    "timezone": "Asia/Jakarta"
+  },
+  "offsets": {
+    "kandangRoof": 4.5,
+    "kolamBase": -1.8,
+    "ubiSolar": 3.2
+  },
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "Beri pakan ayam pagi & ganti air minum",
+      "zone": "Kandang Ayam",
+      "type": "rutin",
+      "detail": "Harian • Setiap Pagi 07:00 WIB",
+      "triggerRule": "manual",
+      "priority": "Tinggi",
+      "notes": "Pastikan wadah minum bersih dan tambahkan vitamin/elektrolit jika cuaca terik.",
+      "completed": false,
+      "createdAt": 1795341097558,
+      "schedule": {
+        "kind": "daily",
+        "times": [
+          "07:00"
+        ],
+        "days": []
+      }
+    },
+    {
+      "id": "task-2",
+      "title": "Pemberian pelet ikan & cek aerator kolam terpal",
+      "zone": "Kolam Ikan",
+      "type": "rutin",
+      "detail": "Harian • Pukul 08:30 & 16:30 WIB",
+      "triggerRule": "manual",
+      "priority": "Tinggi",
+      "notes": "Amati nafsu makan ikan di kolam Ø1m; jangan beri pakan berlebih saat mendung.",
+      "completed": false,
+      "createdAt": 1795345497558,
+      "schedule": {
+        "kind": "daily",
+        "times": [
+          "08:30",
+          "16:30"
+        ],
+        "days": []
+      }
+    },
+    {
+      "id": "task-3",
+      "title": "Semprot kabut air atap fiber & cek aliran angin",
+      "zone": "Kandang Ayam",
+      "type": "kondisional",
+      "detail": "Jika Suhu Kandang Ayam ≥ 34.5°C",
+      "triggerRule": "kandang_hot",
+      "priority": "Tinggi",
+      "notes": "Kurangi stres panas (heat stress) pada ayam akibat radiasi atap fiber siang hari.",
+      "completed": false,
+      "createdAt": 1795352497558,
+      "schedule": {
+        "kind": "conditional",
+        "times": [],
+        "days": []
+      }
+    },
+    {
+      "id": "task-4",
+      "title": "Kencangkan aerasi & kurangi porsi pakan ikan",
+      "zone": "Kolam Ikan",
+      "type": "kondisional",
+      "detail": "Jika Suhu Air Kolam Ikan ≥ 31.0°C",
+      "triggerRule": "kolam_warm",
+      "priority": "Sedang",
+      "notes": "Suhu air hangat menurunkan kadar oksigen terlarut pada kolam terpal 628 liter.",
+      "completed": false,
+      "createdAt": 1795357497558,
+      "schedule": {
+        "kind": "conditional",
+        "times": [],
+        "days": []
+      }
+    },
+    {
+      "id": "task-5",
+      "title": "Siram bedengan ubi jalar sore hari",
+      "zone": "Lahan Ubi Jalar",
+      "type": "kondisional",
+      "detail": "Jika Suhu Ubi Jalar ≥ 34.0°C & RH < 65%",
+      "triggerRule": "ubi_hot_dry",
+      "priority": "Sedang",
+      "notes": "Lahan pekarangan tanpa teduhan cepat kehilangan kelembapan permukaan saat terik.",
+      "completed": false,
+      "createdAt": 1795362497558,
+      "schedule": {
+        "kind": "conditional",
+        "times": [],
+        "days": []
+      }
+    },
+    {
+      "id": "task-6",
+      "title": "Siphon dasar kolam & aplikasi probiotik air",
+      "zone": "Kolam Ikan",
+      "type": "rutin",
+      "detail": "Mingguan • Setiap Minggu Pagi",
+      "triggerRule": "manual",
+      "priority": "Sedang",
+      "notes": "Buang endapan kotoran dasar 15–20% volume air lalu isi ulang air endapan.",
+      "completed": false,
+      "createdAt": 1795377497559,
+      "schedule": {
+        "kind": "weekly",
+        "times": [
+          "07:00"
+        ],
+        "days": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "task-7",
+      "title": "Kalibrasi manual suhu air kolam & kandang dengan termometer",
+      "zone": "Umum",
+      "type": "sekali",
+      "detail": "Sekali Jalan • Pukul 14:00 WIB saat terik",
+      "triggerRule": "manual",
+      "priority": "Rendah",
+      "notes": "Cocokkan pembacaan termometer fisik dengan angka estimasi dashboard lalu sesuaikan slider Kalibrasi.",
+      "completed": false,
+      "createdAt": 1795391497559,
+      "schedule": {
+        "kind": "once",
+        "times": [
+          "14:00"
+        ],
+        "days": []
+      }
+    }
+  ],
+  "history": []
+}

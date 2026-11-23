@@ -1,0 +1,10 @@
+{
+  "name": "suhu-farm-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dashboard suhu mikroiklim Rencang Farm + API state tugas",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node scripts/dev-server.js"
+  }
+}
