@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-23T14:30:36.020Z",
-  "updatedBy": "dashboard",
+  "updatedAt": "2026-11-23T14:31:04.315Z",
+  "updatedBy": "hermes-restore",
   "farm": {
     "name": "Rencang Farm",
     "coords": {
@@ -17,6 +17,25 @@
     "ubiSolar": 3.2
   },
   "tasks": [
+    {
+      "id": "task-7",
+      "title": "Kalibrasi manual suhu air kolam & kandang dengan termometer",
+      "zone": "Umum",
+      "type": "sekali",
+      "detail": "Sekali Jalan • Pukul 14:00 WIB saat terik",
+      "triggerRule": "manual",
+      "priority": "Rendah",
+      "notes": "Cocokkan pembacaan termometer fisik dengan angka estimasi dashboard lalu sesuaikan slider Kalibrasi.",
+      "completed": false,
+      "createdAt": 1795391497559,
+      "schedule": {
+        "kind": "once",
+        "times": [
+          "14:00"
+        ],
+        "days": []
+      }
+    },
     {
       "id": "task-1",
       "title": "Beri pakan ayam pagi & ganti air minum",
@@ -131,6 +150,12 @@
     }
   ],
   "history": [
+    {
+      "taskId": "task-7",
+      "action": "added",
+      "by": "hermes-restore",
+      "at": "2026-11-23T14:31:04.315Z"
+    },
     {
       "taskId": "task-7",
       "action": "deleted",
