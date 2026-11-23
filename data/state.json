@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-23T11:03:42.630Z",
-  "updatedBy": "hermes-test",
+  "updatedAt": "2026-11-23T11:04:30.868Z",
+  "updatedBy": "dashboard",
   "farm": {
     "name": "Rencang Farm",
     "coords": {
@@ -34,8 +34,7 @@
           "07:00"
         ],
         "days": []
-      },
-      "completedAt": null
+      }
     },
     {
       "id": "task-2",
@@ -55,8 +54,7 @@
           "16:30"
         ],
         "days": []
-      },
-      "completedAt": null
+      }
     },
     {
       "id": "task-3",
@@ -84,7 +82,7 @@
       "triggerRule": "kolam_warm",
       "priority": "Sedang",
       "notes": "Suhu air hangat menurunkan kadar oksigen terlarut pada kolam terpal 628 liter.",
-      "completed": false,
+      "completed": true,
       "createdAt": 1795357497558,
       "schedule": {
         "kind": "conditional",
@@ -151,6 +149,12 @@
     }
   ],
   "history": [
+    {
+      "taskId": "*",
+      "action": "replaced",
+      "by": "dashboard",
+      "at": "2026-11-23T11:04:30.868Z"
+    },
     {
       "taskId": "task-2",
       "action": "undone",
