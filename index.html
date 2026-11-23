@@ -114,7 +114,7 @@
             </svg>
           </div>
           <div>
-            <h1 class="font-bold text-lg text-slate-900 tracking-tight">Rencang Farm</h1>
+            <h1 class="font-bold text-lg text-slate-900 tracking-tight leading-tight">Rencang Farm</h1>
             <span class="text-[11px] font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">Microclimate IoT</span>
           </div>
         </div>
@@ -147,6 +147,16 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
             </svg>
             <span>Lahan Ubi Jalar</span>
+          </button>
+
+          <button onclick="switchMainView('tasks', this)" id="navTasksBtn" class="nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
+            <span class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+              <span>Tugas Farm</span>
+            </span>
+            <span id="sidebarTaskBadge" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-800">0</span>
           </button>
 
           <button onclick="openCalibrationModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
@@ -184,10 +194,10 @@
     <!-- Main Content Canvas -->
     <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto w-full space-y-6">
       
-      <!-- Top Header Section -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div class="flex items-center gap-2.5 flex-wrap">
+      <!-- VIEW 1: MONITORING DASHBOARD -->
+      <div id="dashboardView" class="space-y-6">
+        <!-- Top Header Section -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">RENCANG FARM DASHBOARD</h2>
             <span id="apiStatusPill" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
               <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -214,7 +224,7 @@
 
           <button onclick="openCalibrationModal()" class="bg-white hover:bg-teal-50 px-3.5 py-2.5 rounded-2xl shadow-card border border-white text-xs sm:text-sm font-semibold text-teal-800 flex items-center gap-1.5 transition cursor-pointer" title="Sesuaikan Konstanta Offset Termometer">
             <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <span class="hidden sm:inline">Kalibrasi</span>
@@ -460,7 +470,253 @@
         </div>
       </section>
 
+      <!-- Dashboard Summary Widget: Tugas Hari Ini & Peringatan Kondisi -->
+      <section class="pb-6">
+        <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-white">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base sm:text-lg font-bold text-slate-900">Tugas Hari Ini & Pemicu Kondisi Real-Time</h3>
+                <span id="dashTriggeredBadge" class="hidden px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 animate-pulse">0 Terpicu Cuaca</span>
+              </div>
+              <p class="text-xs text-slate-500">Daftar tugas aktif termasuk tugas kondisional yang otomatis aktif saat ambang suhu/cuaca terpenuhi</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openTaskModal()" class="px-3.5 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+                <span>+ Tambah Tugas</span>
+              </button>
+              <button onclick="switchMainView('tasks', document.getElementById('navTasksBtn'))" class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition cursor-pointer">
+                Kelola Semua Tugas →
+              </button>
+            </div>
+          </div>
+          <div id="dashboardTaskSummaryList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            <!-- Populated dynamically by JS -->
+          </div>
+        </div>
+      </section>
+      </div> <!-- End of dashboardView -->
+
+      <!-- VIEW 2: MANAJEMEN TUGAS FARM -->
+      <div id="tasksView" class="hidden space-y-6 pb-8">
+        <!-- Tasks Header -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">MANAJEMEN TUGAS FARM</h2>
+              <span id="tasksTriggeredHeaderPill" class="px-3 py-1 rounded-full text-xs font-semibold bg-teal-100 text-teal-800 border border-teal-200">
+                Terhubung Sensor Mikro
+              </span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-600 mt-1">
+              Kelola jadwal rutin harian/mingguan, tugas kondisional berbasis suhu/cuaca Banjarasri, dan pekerjaan insidental.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button onclick="resetRoutineTasks()" class="bg-white hover:bg-amber-50 text-amber-800 border border-amber-200 px-3.5 py-2.5 rounded-2xl shadow-card text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer" title="Kembalikan status tugas rutin yang sudah selesai untuk siklus baru">
+              <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Reset Siklus Rutin</span>
+            </button>
+
+            <button onclick="openTaskModal()" class="bg-teal-600 hover:bg-teal-700 active:scale-[0.98] text-white px-4 py-2.5 rounded-2xl shadow-md shadow-teal-600/20 text-xs sm:text-sm font-bold flex items-center gap-2 transition cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Tambah Tugas Baru</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Task KPI Summary Row -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white rounded-2xl p-4 shadow-card border border-white">
+            <span class="text-xs font-semibold text-slate-500">Total Tugas Aktif</span>
+            <div class="mt-1.5 flex items-baseline justify-between">
+              <span id="statTasksActive" class="text-2xl sm:text-3xl font-extrabold text-slate-900">0</span>
+              <span class="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full">Belum Selesai</span>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 shadow-card border border-white">
+            <span class="text-xs font-semibold text-slate-500">Terpicu Cuaca / Suhu</span>
+            <div class="mt-1.5 flex items-baseline justify-between">
+              <span id="statTasksTriggered" class="text-2xl sm:text-3xl font-extrabold text-rose-600">0</span>
+              <span class="text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full">Kondisional Aktif</span>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 shadow-card border border-white">
+            <span class="text-xs font-semibold text-slate-500">Tugas Rutin</span>
+            <div class="mt-1.5 flex items-baseline justify-between">
+              <span id="statTasksRoutine" class="text-2xl sm:text-3xl font-extrabold text-sky-700">0</span>
+              <span class="text-[11px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full">Terjadwal</span>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 shadow-card border border-white">
+            <span class="text-xs font-semibold text-slate-500">Tugas Selesai</span>
+            <div class="mt-1.5 flex items-baseline justify-between">
+              <span id="statTasksCompleted" class="text-2xl sm:text-3xl font-extrabold text-emerald-600">0</span>
+              <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Tuntas</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Bar -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-card border border-white space-y-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+            <!-- Search Input -->
+            <div class="lg:col-span-4 relative">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input type="text" id="taskSearchInput" oninput="renderTasksView()" placeholder="Cari judul tugas, jadwal, atau catatan..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            </div>
+
+            <!-- Type Filter -->
+            <div class="lg:col-span-3">
+              <select id="taskTypeFilter" onchange="renderTasksView()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
+                <option value="all">Semua Tipe Tugas</option>
+                <option value="rutin">🔄 Tugas Rutin</option>
+                <option value="kondisional">⚡ Tugas Kondisional</option>
+                <option value="sekali">📌 Sekali Jalan / Insidental</option>
+              </select>
+            </div>
+
+            <!-- Zone Filter -->
+            <div class="lg:col-span-3">
+              <select id="taskZoneFilter" onchange="renderTasksView()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
+                <option value="all">Semua Zona Farm</option>
+                <option value="Kandang Ayam">🐔 Kandang Ayam</option>
+                <option value="Kolam Ikan">🐟 Kolam Ikan</option>
+                <option value="Lahan Ubi Jalar">🍠 Lahan Ubi Jalar</option>
+                <option value="Kompos/Cacing">🪱 Kompos / Cacing</option>
+                <option value="Umum">🏡 Umum</option>
+              </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="lg:col-span-2">
+              <select id="taskStatusFilter" onchange="renderTasksView()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
+                <option value="all">Semua Status</option>
+                <option value="active">Belum Selesai</option>
+                <option value="completed">Sudah Selesai</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tasks List Container -->
+        <div id="tasksListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div> <!-- End of tasksView -->
+
     </main>
+  </div>
+
+  <!-- Add / Edit Task Modal -->
+  <div id="taskModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-teal-100 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 id="taskModalTitle" class="text-lg font-extrabold text-slate-900">Tambah Tugas Farm</h3>
+          <p class="text-xs text-slate-500">Atur tugas rutin, pemicu suhu/cuaca kondisional, atau tugas sekali jalan</p>
+        </div>
+        <button onclick="closeTaskModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="taskForm" onsubmit="saveTaskForm(event)" class="mt-4 space-y-4">
+        <input type="hidden" id="taskIdInput" value="" />
+
+        <!-- Judul Tugas -->
+        <div>
+          <label for="taskTitleInput" class="block text-xs font-bold text-slate-700 mb-1">Judul Tugas *</label>
+          <input type="text" id="taskTitleInput" required placeholder="Contoh: Beri pakan ayam & cek air minum" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        </div>
+
+        <!-- Zona & Prioritas -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="taskZoneInput" class="block text-xs font-bold text-slate-700 mb-1">Zona Terkait</label>
+            <select id="taskZoneInput" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <option value="Kandang Ayam">Kandang Ayam</option>
+              <option value="Kolam Ikan">Kolam Ikan</option>
+              <option value="Lahan Ubi Jalar">Lahan Ubi Jalar</option>
+              <option value="Kompos/Cacing">Kompos/Cacing</option>
+              <option value="Umum">Umum</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="taskPriorityInput" class="block text-xs font-bold text-slate-700 mb-1">Prioritas</label>
+            <select id="taskPriorityInput" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <option value="Tinggi">🔴 Tinggi</option>
+              <option value="Sedang" selected>🟡 Sedang</option>
+              <option value="Rendah">🟢 Rendah</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tipe Tugas -->
+        <div>
+          <label for="taskTypeInput" class="block text-xs font-bold text-slate-700 mb-1">Tipe Tugas</label>
+          <select id="taskTypeInput" onchange="toggleTaskTypeFields()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <option value="rutin">🔄 Rutin (Harian / Mingguan / Bulanan)</option>
+            <option value="kondisional">⚡ Kondisional (Dipicu Suhu / Cuaca / Kondisi)</option>
+            <option value="sekali">📌 Sekali Jalan / Insidental</option>
+          </select>
+        </div>
+
+        <!-- Opsi Khusus Kondisional: Rule Pemicu Otomatis -->
+        <div id="conditionalRuleGroup" class="hidden bg-amber-50/70 border border-amber-200 rounded-2xl p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <label for="taskTriggerRuleInput" class="text-xs font-bold text-amber-950">Pemicu Otomatis Sensor Real-Time (Opsional)</label>
+            <span class="text-[10px] font-semibold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full">Auto-Detect</span>
+          </div>
+          <select id="taskTriggerRuleInput" onchange="applyPresetConditionLabel()" class="w-full px-3 py-2 rounded-xl bg-white border border-amber-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <option value="manual">-- Syarat Kondisi Manual (Tanpa Pemicu Angka) --</option>
+            <option value="kandang_hot">Jika Suhu Kandang Ayam ≥ 34.5°C</option>
+            <option value="kolam_warm">Jika Suhu Air Kolam Ikan ≥ 31.0°C</option>
+            <option value="kolam_cold">Jika Suhu Air Kolam Ikan ≤ 26.0°C</option>
+            <option value="ubi_hot_dry">Jika Suhu Ubi Jalar ≥ 34.0°C & RH &lt; 65%</option>
+            <option value="cloudy_rain">Jika Tutupan Awan Tebal (≥ 80% / Potensi Hujan)</option>
+            <option value="high_wind">Jika Kecepatan Angin Kencang (≥ 18 km/j)</option>
+          </select>
+          <p class="text-[11px] text-amber-900/80 leading-relaxed">
+            Jika kondisi di atas terpenuhi oleh pembacaan sensor Banjarasri saat ini, tugas akan otomatis menyala dengan badge <strong>TERPICU SEKARANG</strong>.
+          </p>
+        </div>
+
+        <!-- Detail Jadwal atau Syarat Kondisi -->
+        <div>
+          <label for="taskDetailInput" id="taskDetailLabel" class="block text-xs font-bold text-slate-700 mb-1">Detail Jadwal Rutin *</label>
+          <input type="text" id="taskDetailInput" required placeholder="Contoh: Setiap Pagi 07:00 & Sore 16:00" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        </div>
+
+        <!-- Catatan Opsional -->
+        <div>
+          <label for="taskNotesInput" class="block text-xs font-bold text-slate-700 mb-1">Catatan Tambahan (Opsional)</label>
+          <textarea id="taskNotesInput" rows="2" placeholder="Takaran pakan, dosis probiotik, atau instruksi khusus..." class="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="closeTaskModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 shadow-sm transition cursor-pointer">
+            Simpan Tugas
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Calibration & Formula Explanation Modal -->
@@ -555,12 +811,545 @@
 
     let offsets = loadOffsets();
     let weatherPayload = null;
+    let latestEnvSnapshot = null; // Menyimpan pembacaan suhu/cuaca terbaru untuk evaluasi tugas kondisional
     let trendChartInstance = null;
     let barChartInstance = null;
     let currentTrendFilter = 'all';
+    let currentMainView = 'dashboard';
 
     // =========================================================================
-    // 2. MANAJEMEN PENYIMPANAN LOKAL (KALIBRASI)
+    // 2. MANAJEMEN TUGAS FARM (RUTIN, KONDISIONAL, SEKALI JALAN) + LOCALSTORAGE
+    // =========================================================================
+    const TASKS_STORAGE_KEY = 'rencang_farm_tasks_v1';
+
+    const DEFAULT_TASKS = [
+      {
+        id: 'task-1',
+        title: 'Beri pakan ayam pagi & ganti air minum',
+        zone: 'Kandang Ayam',
+        type: 'rutin',
+        detail: 'Harian • Setiap Pagi 07:00 WIB',
+        triggerRule: 'manual',
+        priority: 'Tinggi',
+        notes: 'Pastikan wadah minum bersih dan tambahkan vitamin/elektrolit jika cuaca terik.',
+        completed: false,
+        createdAt: Date.now() - 86400000
+      },
+      {
+        id: 'task-2',
+        title: 'Pemberian pelet ikan & cek aerator kolam terpal',
+        zone: 'Kolam Ikan',
+        type: 'rutin',
+        detail: 'Harian • Pukul 08:30 & 16:30 WIB',
+        triggerRule: 'manual',
+        priority: 'Tinggi',
+        notes: 'Amati nafsu makan ikan di kolam Ø1m; jangan beri pakan berlebih saat mendung.',
+        completed: false,
+        createdAt: Date.now() - 82000000
+      },
+      {
+        id: 'task-3',
+        title: 'Semprot kabut air atap fiber & cek aliran angin',
+        zone: 'Kandang Ayam',
+        type: 'kondisional',
+        detail: 'Jika Suhu Kandang Ayam ≥ 34.5°C',
+        triggerRule: 'kandang_hot',
+        priority: 'Tinggi',
+        notes: 'Kurangi stres panas (heat stress) pada ayam akibat radiasi atap fiber siang hari.',
+        completed: false,
+        createdAt: Date.now() - 75000000
+      },
+      {
+        id: 'task-4',
+        title: 'Kencangkan aerasi & kurangi porsi pakan ikan',
+        zone: 'Kolam Ikan',
+        type: 'kondisional',
+        detail: 'Jika Suhu Air Kolam Ikan ≥ 31.0°C',
+        triggerRule: 'kolam_warm',
+        priority: 'Sedang',
+        notes: 'Suhu air hangat menurunkan kadar oksigen terlarut pada kolam terpal 628 liter.',
+        completed: false,
+        createdAt: Date.now() - 70000000
+      },
+      {
+        id: 'task-5',
+        title: 'Siram bedengan ubi jalar sore hari',
+        zone: 'Lahan Ubi Jalar',
+        type: 'kondisional',
+        detail: 'Jika Suhu Ubi Jalar ≥ 34.0°C & RH < 65%',
+        triggerRule: 'ubi_hot_dry',
+        priority: 'Sedang',
+        notes: 'Lahan pekarangan tanpa teduhan cepat kehilangan kelembapan permukaan saat terik.',
+        completed: false,
+        createdAt: Date.now() - 65000000
+      },
+      {
+        id: 'task-6',
+        title: 'Siphon dasar kolam & aplikasi probiotik air',
+        zone: 'Kolam Ikan',
+        type: 'rutin',
+        detail: 'Mingguan • Setiap Minggu Pagi',
+        triggerRule: 'manual',
+        priority: 'Sedang',
+        notes: 'Buang endapan kotoran dasar 15–20% volume air lalu isi ulang air endapan.',
+        completed: false,
+        createdAt: Date.now() - 50000000
+      },
+      {
+        id: 'task-7',
+        title: 'Kalibrasi manual suhu air kolam & kandang dengan termometer',
+        zone: 'Umum',
+        type: 'sekali',
+        detail: 'Sekali Jalan • Pukul 14:00 WIB saat terik',
+        triggerRule: 'manual',
+        priority: 'Rendah',
+        notes: 'Cocokkan pembacaan termometer fisik dengan angka estimasi dashboard lalu sesuaikan slider Kalibrasi.',
+        completed: false,
+        createdAt: Date.now() - 36000000
+      }
+    ];
+
+    let farmTasks = loadTasks();
+
+    function loadTasks() {
+      try {
+        const saved = localStorage.getItem(TASKS_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (e) {
+        console.warn('Gagal memuat tugas dari localStorage:', e);
+      }
+      return [...DEFAULT_TASKS];
+    }
+
+    function persistTasks() {
+      try {
+        localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(farmTasks));
+      } catch (e) {
+        console.warn('Gagal menyimpan tugas ke localStorage:', e);
+      }
+      refreshTaskUI();
+    }
+
+    /**
+     * Mengevaluasi apakah tugas kondisional sedang terpicu oleh pembacaan cuaca/suhu Banjarasri saat ini
+     */
+    function evaluateConditionalTrigger(task) {
+      if (task.type !== 'kondisional' || !latestEnvSnapshot) {
+        return { triggered: false, reason: '' };
+      }
+      const { cur, calc } = latestEnvSnapshot;
+      switch (task.triggerRule) {
+        case 'kandang_hot':
+          return {
+            triggered: calc.kandang >= 34.5,
+            reason: `Suhu kandang saat ini ${calc.kandang.toFixed(1)}°C (≥ 34.5°C)`
+          };
+        case 'kolam_warm':
+          return {
+            triggered: calc.kolam >= 31.0,
+            reason: `Suhu kolam saat ini ${calc.kolam.toFixed(1)}°C (≥ 31.0°C)`
+          };
+        case 'kolam_cold':
+          return {
+            triggered: calc.kolam <= 26.0,
+            reason: `Suhu kolam saat ini ${calc.kolam.toFixed(1)}°C (≤ 26.0°C)`
+          };
+        case 'ubi_hot_dry':
+          return {
+            triggered: calc.ubi >= 34.0 && cur.relative_humidity_2m < 65,
+            reason: `Suhu ubi ${calc.ubi.toFixed(1)}°C & RH ${cur.relative_humidity_2m}%`
+          };
+        case 'cloudy_rain':
+          return {
+            triggered: cur.cloud_cover >= 80,
+            reason: `Tutupan awan ${cur.cloud_cover}% (mendung tebal)`
+          };
+        case 'high_wind':
+          return {
+            triggered: cur.wind_speed_10m >= 18,
+            reason: `Kecepatan angin ${cur.wind_speed_10m.toFixed(1)} km/j`
+          };
+        default:
+          return { triggered: false, reason: '' };
+      }
+    }
+
+    function refreshTaskUI() {
+      const activeTasks = farmTasks.filter(t => !t.completed);
+      const completedTasks = farmTasks.filter(t => t.completed);
+      const routineActive = activeTasks.filter(t => t.type === 'rutin');
+      const triggeredActive = activeTasks.filter(t => evaluateConditionalTrigger(t).triggered);
+
+      // Update Sidebar Badge
+      const badge = document.getElementById('sidebarTaskBadge');
+      if (badge) {
+        badge.textContent = activeTasks.length;
+      }
+
+      // Update Stat Cards di Halaman Tugas
+      const elActive = document.getElementById('statTasksActive');
+      if (elActive) {
+        elActive.textContent = activeTasks.length;
+        document.getElementById('statTasksTriggered').textContent = triggeredActive.length;
+        document.getElementById('statTasksRoutine').textContent = routineActive.length;
+        document.getElementById('statTasksCompleted').textContent = completedTasks.length;
+      }
+
+      // Update Dashboard Summary Widget
+      renderDashboardTaskSummary(activeTasks, triggeredActive);
+
+      // Render Daftar Tugas Lengkap
+      renderTasksView();
+    }
+
+    function renderDashboardTaskSummary(activeTasks, triggeredActive) {
+      const container = document.getElementById('dashboardTaskSummaryList');
+      const triggeredBadge = document.getElementById('dashTriggeredBadge');
+      if (!container) return;
+
+      if (triggeredActive.length > 0) {
+        triggeredBadge.textContent = `${triggeredActive.length} Terpicu Cuaca`;
+        triggeredBadge.classList.remove('hidden');
+      } else {
+        triggeredBadge.classList.add('hidden');
+      }
+
+      // Prioritaskan tugas kondisional yang sedang terpicu, lalu prioritas tinggi
+      const priorityWeight = { Tinggi: 3, Sedang: 2, Rendah: 1 };
+      const sorted = [...activeTasks].sort((a, b) => {
+        const trigA = evaluateConditionalTrigger(a).triggered ? 10 : 0;
+        const trigB = evaluateConditionalTrigger(b).triggered ? 10 : 0;
+        if (trigB !== trigA) return trigB - trigA;
+        return (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0);
+      });
+
+      const previewTasks = sorted.slice(0, 6);
+
+      if (previewTasks.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full bg-teal-50/60 border border-teal-100 rounded-2xl p-4 text-center text-xs text-slate-600">
+            Semua tugas aktif sudah selesai! Klik <strong>Kelola Semua Tugas</strong> untuk menambah tugas baru atau mereset siklus rutin.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = previewTasks.map(task => {
+        const trig = evaluateConditionalTrigger(task);
+        const typeMeta = getTaskTypeMeta(task.type);
+        const cardBorder = trig.triggered
+          ? 'border-rose-300 bg-rose-50/40 ring-1 ring-rose-200'
+          : 'border-slate-100 bg-slate-50/60 hover:bg-white';
+
+        return `
+          <div class="p-3.5 rounded-2xl border ${cardBorder} flex items-start justify-between gap-3 transition-all">
+            <div class="flex items-start gap-2.5 min-w-0">
+              <button onclick="toggleTaskComplete('${task.id}')" class="mt-0.5 w-5 h-5 rounded-lg border-2 border-teal-500 hover:bg-teal-100 flex items-center justify-center shrink-0 transition cursor-pointer" title="Tandai Selesai">
+              </button>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${typeMeta.badgeClass}">${typeMeta.label}</span>
+                  <span class="text-[10px] font-semibold text-slate-500">${task.zone}</span>
+                  ${trig.triggered ? `<span class="px-1.5 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-600 text-white">⚡ TERPICU</span>` : ''}
+                </div>
+                <p class="text-xs font-bold text-slate-900 truncate" title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</p>
+                <p class="text-[11px] text-slate-500 mt-0.5 truncate">${trig.triggered ? trig.reason : escapeHtml(task.detail)}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTasksView() {
+      const container = document.getElementById('tasksListContainer');
+      if (!container) return;
+
+      const searchQuery = (document.getElementById('taskSearchInput')?.value || '').toLowerCase().trim();
+      const typeFilter = document.getElementById('taskTypeFilter')?.value || 'all';
+      const zoneFilter = document.getElementById('taskZoneFilter')?.value || 'all';
+      const statusFilter = document.getElementById('taskStatusFilter')?.value || 'all';
+
+      const filtered = farmTasks.filter(task => {
+        if (typeFilter !== 'all' && task.type !== typeFilter) return false;
+        if (zoneFilter !== 'all' && task.zone !== zoneFilter) return false;
+        if (statusFilter === 'active' && task.completed) return false;
+        if (statusFilter === 'completed' && !task.completed) return false;
+        if (searchQuery) {
+          const haystack = `${task.title} ${task.detail} ${task.notes || ''} ${task.zone}`.toLowerCase();
+          if (!haystack.includes(searchQuery)) return false;
+        }
+        return true;
+      });
+
+      // Urutkan: Belum selesai dulu, lalu yang terpicu cuaca, lalu prioritas
+      const priorityWeight = { Tinggi: 3, Sedang: 2, Rendah: 1 };
+      filtered.sort((a, b) => {
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+        const trigA = evaluateConditionalTrigger(a).triggered ? 10 : 0;
+        const trigB = evaluateConditionalTrigger(b).triggered ? 10 : 0;
+        if (trigB !== trigA) return trigB - trigA;
+        return (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0);
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full bg-white rounded-2xl p-8 text-center shadow-card border border-white">
+            <p class="text-sm font-bold text-slate-800">Tidak ada tugas yang sesuai filter</p>
+            <p class="text-xs text-slate-500 mt-1">Coba ubah filter pencarian atau klik tombol <strong>Tambah Tugas Baru</strong>.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(task => {
+        const trig = evaluateConditionalTrigger(task);
+        const typeMeta = getTaskTypeMeta(task.type);
+        const prioBadge = getPriorityBadge(task.priority);
+
+        const cardStyle = task.completed
+          ? 'bg-white/75 border-slate-200/80 opacity-75'
+          : trig.triggered
+            ? 'bg-white border-rose-300 ring-2 ring-rose-500/20 shadow-cardHover'
+            : 'bg-white border-white shadow-card hover:shadow-cardHover';
+
+        return `
+          <div class="rounded-2xl p-5 border ${cardStyle} flex flex-col justify-between gap-4 transition-all">
+            <div>
+              <!-- Top Badges Row -->
+              <div class="flex items-center justify-between gap-2 flex-wrap mb-2.5">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${typeMeta.badgeClass}">${typeMeta.icon} ${typeMeta.label}</span>
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">${escapeHtml(task.zone)}</span>
+                  ${trig.triggered && !task.completed ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-600 text-white animate-pulse">⚡ TERPICU SEKARANG</span>` : ''}
+                </div>
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${prioBadge}">${task.priority}</span>
+              </div>
+
+              <!-- Title + Checkbox -->
+              <div class="flex items-start gap-3">
+                <button onclick="toggleTaskComplete('${task.id}')" class="mt-0.5 w-6 h-6 rounded-xl border-2 ${task.completed ? 'bg-teal-600 border-teal-600 text-white' : 'border-slate-300 hover:border-teal-500 bg-white'} flex items-center justify-center shrink-0 transition cursor-pointer" title="${task.completed ? 'Tandai Belum Selesai' : 'Tandai Selesai'}">
+                  ${task.completed ? `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>` : ''}
+                </button>
+                <div class="min-w-0 flex-1">
+                  <h4 class="text-sm sm:text-base font-bold ${task.completed ? 'line-through text-slate-400' : 'text-slate-900'} leading-snug">
+                    ${escapeHtml(task.title)}
+                  </h4>
+                  <p class="text-xs font-semibold ${trig.triggered && !task.completed ? 'text-rose-700' : 'text-teal-700'} mt-1">
+                    ${escapeHtml(task.detail)}
+                  </p>
+                  ${trig.triggered && !task.completed ? `<p class="text-[11px] font-medium text-rose-600 mt-0.5">Kondisi aktual: ${trig.reason}</p>` : ''}
+                  ${task.notes ? `<p class="text-xs text-slate-500 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 leading-relaxed">${escapeHtml(task.notes)}</p>` : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Footer -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+              <button onclick="toggleTaskComplete('${task.id}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold ${task.completed ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-teal-50 text-teal-800 hover:bg-teal-100'} transition cursor-pointer">
+                ${task.completed ? '↩ Buka Kembali' : '✓ Tandai Selesai'}
+              </button>
+
+              <div class="flex items-center gap-1.5">
+                <button onclick="openTaskModal('${task.id}')" class="p-2 rounded-xl text-slate-500 hover:text-teal-700 hover:bg-teal-50 transition cursor-pointer" title="Edit Tugas">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button onclick="deleteTask('${task.id}')" class="p-2 rounded-xl text-slate-500 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer" title="Hapus Tugas">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getTaskTypeMeta(type) {
+      if (type === 'rutin') {
+        return { label: 'Rutin', icon: '🔄', badgeClass: 'bg-sky-100 text-sky-800' };
+      }
+      if (type === 'kondisional') {
+        return { label: 'Kondisional', icon: '⚡', badgeClass: 'bg-amber-100 text-amber-800' };
+      }
+      return { label: 'Sekali Jalan', icon: '📌', badgeClass: 'bg-purple-100 text-purple-800' };
+    }
+
+    function getPriorityBadge(priority) {
+      if (priority === 'Tinggi') return 'bg-rose-50 text-rose-700 border border-rose-200';
+      if (priority === 'Sedang') return 'bg-amber-50 text-amber-700 border border-amber-200';
+      return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function toggleTaskComplete(taskId) {
+      const idx = farmTasks.findIndex(t => t.id === taskId);
+      if (idx === -1) return;
+      farmTasks[idx].completed = !farmTasks[idx].completed;
+      persistTasks();
+      showToast(farmTasks[idx].completed ? 'Tugas ditandai selesai.' : 'Status tugas dikembalikan ke aktif.');
+    }
+
+    function deleteTask(taskId) {
+      const target = farmTasks.find(t => t.id === taskId);
+      if (!target) return;
+      farmTasks = farmTasks.filter(t => t.id !== taskId);
+      persistTasks();
+      showToast(`Tugas "${target.title}" telah dihapus.`);
+    }
+
+    function resetRoutineTasks() {
+      let resetCount = 0;
+      farmTasks.forEach(t => {
+        if (t.type === 'rutin' && t.completed) {
+          t.completed = false;
+          resetCount++;
+        }
+      });
+      persistTasks();
+      if (resetCount > 0) {
+        showToast(`${resetCount} tugas rutin direset untuk siklus baru.`);
+      } else {
+        showToast('Semua tugas rutin sudah dalam status aktif.');
+      }
+    }
+
+    function openTaskModal(taskId = null) {
+      const modal = document.getElementById('taskModal');
+      const titleEl = document.getElementById('taskModalTitle');
+      const idInput = document.getElementById('taskIdInput');
+
+      if (taskId) {
+        const existing = farmTasks.find(t => t.id === taskId);
+        if (!existing) return;
+        titleEl.textContent = 'Edit Tugas Farm';
+        idInput.value = existing.id;
+        document.getElementById('taskTitleInput').value = existing.title;
+        document.getElementById('taskZoneInput').value = existing.zone;
+        document.getElementById('taskPriorityInput').value = existing.priority;
+        document.getElementById('taskTypeInput').value = existing.type;
+        document.getElementById('taskTriggerRuleInput').value = existing.triggerRule || 'manual';
+        document.getElementById('taskDetailInput').value = existing.detail;
+        document.getElementById('taskNotesInput').value = existing.notes || '';
+      } else {
+        titleEl.textContent = 'Tambah Tugas Farm Baru';
+        idInput.value = '';
+        document.getElementById('taskForm').reset();
+        document.getElementById('taskTypeInput').value = 'rutin';
+        document.getElementById('taskTriggerRuleInput').value = 'manual';
+      }
+
+      toggleTaskTypeFields();
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeTaskModal() {
+      const modal = document.getElementById('taskModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function toggleTaskTypeFields() {
+      const typeVal = document.getElementById('taskTypeInput').value;
+      const condGroup = document.getElementById('conditionalRuleGroup');
+      const detailLabel = document.getElementById('taskDetailLabel');
+      const detailInput = document.getElementById('taskDetailInput');
+
+      if (typeVal === 'kondisional') {
+        condGroup.classList.remove('hidden');
+        detailLabel.textContent = 'Syarat Kondisi Pemicu *';
+        detailInput.placeholder = 'Contoh: Jika Suhu Kandang ≥ 34.5°C atau air kolam keruh';
+      } else if (typeVal === 'rutin') {
+        condGroup.classList.add('hidden');
+        detailLabel.textContent = 'Detail Jadwal Rutin *';
+        detailInput.placeholder = 'Contoh: Harian • Setiap Pagi 07:00 WIB';
+      } else {
+        condGroup.classList.add('hidden');
+        detailLabel.textContent = 'Target Waktu / Keterangan Pelaksanaan *';
+        detailInput.placeholder = 'Contoh: Sekali Jalan • Akhir pekan ini';
+      }
+    }
+
+    function applyPresetConditionLabel() {
+      const rule = document.getElementById('taskTriggerRuleInput').value;
+      const detailInput = document.getElementById('taskDetailInput');
+      const presets = {
+        kandang_hot: 'Jika Suhu Kandang Ayam ≥ 34.5°C',
+        kolam_warm: 'Jika Suhu Air Kolam Ikan ≥ 31.0°C',
+        kolam_cold: 'Jika Suhu Air Kolam Ikan ≤ 26.0°C',
+        ubi_hot_dry: 'Jika Suhu Ubi Jalar ≥ 34.0°C & RH < 65%',
+        cloudy_rain: 'Jika Tutupan Awan Tebal (≥ 80% / Potensi Hujan)',
+        high_wind: 'Jika Kecepatan Angin Kencang (≥ 18 km/j)'
+      };
+      if (presets[rule]) {
+        detailInput.value = presets[rule];
+      }
+    }
+
+    function saveTaskForm(event) {
+      event.preventDefault();
+      const id = document.getElementById('taskIdInput').value;
+      const title = document.getElementById('taskTitleInput').value.trim();
+      const zone = document.getElementById('taskZoneInput').value;
+      const priority = document.getElementById('taskPriorityInput').value;
+      const type = document.getElementById('taskTypeInput').value;
+      const triggerRule = type === 'kondisional' ? document.getElementById('taskTriggerRuleInput').value : 'manual';
+      const detail = document.getElementById('taskDetailInput').value.trim();
+      const notes = document.getElementById('taskNotesInput').value.trim();
+
+      if (!title || !detail) return;
+
+      if (id) {
+        const idx = farmTasks.findIndex(t => t.id === id);
+        if (idx !== -1) {
+          farmTasks[idx] = {
+            ...farmTasks[idx],
+            title,
+            zone,
+            priority,
+            type,
+            triggerRule,
+            detail,
+            notes
+          };
+          showToast('Perubahan tugas berhasil disimpan.');
+        }
+      } else {
+        farmTasks.unshift({
+          id: 'task-' + Date.now(),
+          title,
+          zone,
+          priority,
+          type,
+          triggerRule,
+          detail,
+          notes,
+          completed: false,
+          createdAt: Date.now()
+        });
+        showToast('Tugas baru berhasil ditambahkan.');
+      }
+
+      closeTaskModal();
+      persistTasks();
+    }
+
+    // =========================================================================
+    // 3. MANAJEMEN PENYIMPANAN LOKAL (KALIBRASI)
     // =========================================================================
     function loadOffsets() {
       try {
@@ -757,6 +1546,9 @@
         temp5hAgo
       });
 
+      // Simpan snapshot terbaru untuk evaluasi tugas kondisional otomatis
+      latestEnvSnapshot = { cur, calc: nowCalc };
+
       // Update KPI Cards
       updateKpiCards(cur, nowCalc);
 
@@ -773,6 +1565,9 @@
 
       // Render Peringatan & Rekomendasi Otomatis
       renderAutomatedAlerts(cur, nowCalc);
+
+      // Perbarui status tugas kondisional & ringkasan tugas
+      refreshTaskUI();
 
       // Update timestamp sinkronisasi terakhir
       const nowTime = new Date();
@@ -1185,20 +1980,44 @@
       const explanations = {
         kandang: `<strong>Rumus Kandang Ayam:</strong> <code>T_luar + (${offsets.kandangRoof.toFixed(1)} × Faktor_Cerah) - min(2.5, 0.12 × Angin)</code>. Memperhitungkan efek rumah kaca atap fiber saat terik serta pendinginan lorong angin depan-belakang.`,
         kolam: `<strong>Rumus Kolam Ikan (Ø1m x 80cm):</strong> <code>(0.25·T_0 + 0.35·T_-2j + 0.40·T_-5j) ${offsets.kolamBase.toFixed(1)} + Bonus_Terik(09–15)</code>. Mensimulasikan lambatnya perubahan suhu 628L air dan bayangan dinding 2m.`,
-        ubi: `<strong>Rumus Ubi Jalar (Terbuka):</strong> <code>T_luar + (${offsets.ubiSolar.toFixed(1)} × Faktor_Cerah) - min(1.5, 0.08 × Angin) - (0.015 × RH)</code>. Menghitung paporan surya langsung tanpa naungan dikurangi pendinginan transpirasi daun.`,
+        ubi: `<strong>Rumus Ubi Jalar (Terbuka):</strong> <code>T_luar + (${offsets.ubiSolar.toFixed(1)} × Faktor_Cerah) - min(1.5, 0.08 × Angin) - (0.015 × RH)</code>. Menghitung paparan surya langsung tanpa naungan dikurangi pendinginan transpirasi daun.`,
         banjarasri: `<strong>Data Referensi Banjarasri:</strong> Diambil langsung dari satelit cuaca Open-Meteo untuk koordinat <code>-7.5075, 112.7578</code> setiap interval 2 jam sekali.`
       };
       detailBox.innerHTML = explanations[zoneKey] || explanations.banjarasri;
     }
 
-    function selectNav(zone, btnEl) {
+    function switchMainView(viewName, btnEl) {
+      currentMainView = viewName;
+      const dashView = document.getElementById('dashboardView');
+      const tasksView = document.getElementById('tasksView');
+
       // Update active button style
       document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('bg-[#D3F4F6]', 'text-teal-900', 'font-semibold');
         btn.classList.add('text-slate-600', 'font-medium');
       });
-      btnEl.classList.remove('text-slate-600', 'font-medium');
-      btnEl.classList.add('bg-[#D3F4F6]', 'text-teal-900', 'font-semibold');
+      if (btnEl) {
+        btnEl.classList.remove('text-slate-600', 'font-medium');
+        btnEl.classList.add('bg-[#D3F4F6]', 'text-teal-900', 'font-semibold');
+      }
+
+      if (viewName === 'tasks') {
+        dashView.classList.add('hidden');
+        tasksView.classList.remove('hidden');
+        refreshTaskUI();
+      } else {
+        tasksView.classList.add('hidden');
+        dashView.classList.remove('hidden');
+      }
+
+      if (window.innerWidth < 1024) {
+        toggleMobileSidebar(false);
+      }
+    }
+
+    function selectNav(zone, btnEl) {
+      // Pastikan kembali ke tampilan dashboard utama jika sedang di tab Tugas Farm
+      switchMainView('dashboard', btnEl);
 
       // Highlight matching KPI card & filter chart
       document.querySelectorAll('.kpi-card').forEach(card => {
@@ -1217,11 +2036,6 @@
       } else {
         document.getElementById('zoneFilterSelect').value = 'all';
         updateTrendFilter('all');
-      }
-
-      // Tutup sidebar otomatis di perangkat mobile
-      if (window.innerWidth < 1024) {
-        toggleMobileSidebar(false);
       }
     }
 
@@ -1332,6 +2146,7 @@
 
     // Inisialisasi saat halaman dimuat
     window.addEventListener('DOMContentLoaded', () => {
+      refreshTaskUI();
       startClocksAndAutoSync();
       fetchBanjarasriWeather(false);
     });
