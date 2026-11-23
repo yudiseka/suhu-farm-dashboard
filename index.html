@@ -1115,6 +1115,30 @@
       if (stateSync.online) await syncStateFromApi();
     }
 
+    // Link koneksi (?claim=...) dari pemilik farm: simpan kunci sekali, lalu
+    // buang parameternya dari address bar supaya tidak ikut tersimpan.
+    async function handleClaimLink() {
+      let url;
+      try { url = new URL(window.location.href); } catch (e) { return false; }
+      const claim = url.searchParams.get('claim');
+      if (!claim) return false;
+      try {
+        const res = await fetch('/api/state?claim=' + encodeURIComponent(claim), { cache: 'no-store' });
+        const json = await res.json().catch(() => ({}));
+        if (json && json.key) {
+          setApiKey(json.key);
+          url.searchParams.delete('claim');
+          window.history.replaceState({}, '', url.pathname + (url.search || '') + url.hash);
+          showToast('Dashboard tersambung ke server.');
+          return true;
+        }
+        showToast('Link koneksi sudah kedaluwarsa. Minta link baru.');
+      } catch (e) {
+        showToast('Gagal membuka link koneksi: ' + e.message);
+      }
+      return false;
+    }
+
     async function pushOffsetsToApi() {
       if (!getApiKey()) return;
       try {
@@ -2337,10 +2361,11 @@
     }
 
     // Inisialisasi saat halaman dimuat
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       refreshTaskUI();
       startClocksAndAutoSync();
       fetchBanjarasriWeather(false);
+      await handleClaimLink();
       updateSyncStatusUI();
       syncStateFromApi();
       setInterval(syncStateFromApi, 5 * 60 * 1000);

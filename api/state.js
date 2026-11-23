@@ -27,6 +27,21 @@ function isAuthorized(req) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
+// Link koneksi sekali pakai: <exp>.<hmac(exp)>, ditandatangani dengan FARM_API_KEY.
+// Hanya mengembalikan kunci jika belum kedaluwarsa, jadi tautan yang bocor
+// sesudah lewat masa berlaku tidak berguna.
+function verifyClaim(claim) {
+  const expected = process.env.FARM_API_KEY || '';
+  const parts = String(claim || '').split('.');
+  if (!expected || parts.length !== 2) return false;
+  const exp = Number(parts[0]);
+  if (!Number.isFinite(exp) || Date.now() > exp) return false;
+  const good = crypto.createHmac('sha256', expected).update('claim:' + exp).digest('hex').slice(0, 32);
+  const a = Buffer.from(parts[1]);
+  const b = Buffer.from(good);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 function text(value, max = 200) {
   if (value === undefined || value === null) return '';
   return String(value).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max);
@@ -86,6 +101,12 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
+      const url = new URL(req.url, 'https://local.invalid');
+      const claim = url.searchParams.get('claim');
+      if (claim) {
+        if (!verifyClaim(claim)) return send(res, 403, { ok: false, error: 'Link koneksi tidak valid atau sudah kedaluwarsa' });
+        return send(res, 200, { ok: true, key: process.env.FARM_API_KEY });
+      }
       const state = await readState();
       return send(res, 200, { ok: true, state });
     }
