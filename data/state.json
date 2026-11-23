@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-23T21:19:38.293Z",
-  "updatedBy": "dashboard",
+  "updatedAt": "2026-11-24T06:01:39.297322+07:00",
+  "updatedBy": "hermes",
   "farm": {
     "name": "Rencang Farm",
     "coords": {
@@ -26,7 +26,7 @@
       "triggerRule": "manual",
       "priority": "Tinggi",
       "notes": "Pastikan wadah minum bersih dan tambahkan vitamin/elektrolit jika cuaca terik.",
-      "completed": false,
+      "completed": true,
       "createdAt": 1795341097558,
       "schedule": {
         "kind": "daily",
@@ -34,7 +34,8 @@
           "07:00"
         ],
         "days": []
-      }
+      },
+      "completedAt": "2026-11-24T06:01:39.297095+07:00"
     },
     {
       "id": "task-2",
