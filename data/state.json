@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-23T11:01:50.243Z",
-  "updatedBy": "hermes",
+  "updatedAt": "2026-11-23T11:03:39.590Z",
+  "updatedBy": "hermes-test",
   "farm": {
     "name": "Rencang Farm",
     "coords": {
@@ -46,7 +46,7 @@
       "triggerRule": "manual",
       "priority": "Tinggi",
       "notes": "Amati nafsu makan ikan di kolam Ø1m; jangan beri pakan berlebih saat mendung.",
-      "completed": false,
+      "completed": true,
       "createdAt": 1795345497558,
       "schedule": {
         "kind": "daily",
@@ -55,7 +55,8 @@
           "16:30"
         ],
         "days": []
-      }
+      },
+      "completedAt": "2026-11-23T11:03:39.590Z"
     },
     {
       "id": "task-3",
@@ -150,6 +151,12 @@
     }
   ],
   "history": [
+    {
+      "taskId": "task-2",
+      "action": "done",
+      "by": "hermes-test",
+      "at": "2026-11-23T11:03:39.590Z"
+    },
     {
       "taskId": "task-1",
       "action": "undone",
