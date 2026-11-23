@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-24T06:21:54.443113+07:00",
+  "updatedAt": "2026-11-24T06:21:57.040402+07:00",
   "updatedBy": "hermes",
   "farm": {
     "name": "Rencang Farm",
@@ -17,6 +17,25 @@
     "ubiSolar": 3.2
   },
   "tasks": [
+    {
+      "id": "task-8",
+      "title": "Aerasi subuh kolam (5 menit)",
+      "zone": "Kolam Ikan",
+      "type": "rutin",
+      "detail": "Harian • 05:00 WIB (O2 terlarut paling rendah sebelum matahari terbit)",
+      "triggerRule": "manual",
+      "priority": "Tinggi",
+      "notes": "Kolam tanpa aerator: oksigen terendah 04.00–06.00 karena semalaman tidak ada fotosintesis. Kencangkan aerasi 5 menit, amati ikan di permukaan.",
+      "completed": false,
+      "createdAt": 1795476116156,
+      "schedule": {
+        "kind": "daily",
+        "times": [
+          "05:00"
+        ],
+        "days": []
+      }
+    },
     {
       "id": "task-1",
       "title": "Beri pakan ayam pagi & isi air minum",
