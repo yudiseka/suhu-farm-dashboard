@@ -692,6 +692,7 @@
             <option value="kolam_warm">Jika Suhu Air Kolam Ikan ≥ 31.0°C</option>
             <option value="kolam_cold">Jika Suhu Air Kolam Ikan ≤ 26.0°C</option>
             <option value="ubi_hot_dry">Jika Suhu Ubi Jalar ≥ 34.0°C & RH &lt; 65%</option>
+            <option value="ubi_hot_dry_no_rain">Jika Suhu Ubi Jalar ≥ 34.0°C, RH &lt; 65% &amp; Peluang Hujan &lt; 60%</option>
             <option value="cloudy_rain">Jika Tutupan Awan Tebal (≥ 80% / Potensi Hujan)</option>
             <option value="high_wind">Jika Kecepatan Angin Kencang (≥ 18 km/j)</option>
           </select>
@@ -1177,6 +1178,15 @@
             triggered: calc.ubi >= 34.0 && cur.relative_humidity_2m < 65,
             reason: `Suhu ubi ${calc.ubi.toFixed(1)}°C & RH ${cur.relative_humidity_2m}%`
           };
+        case 'ubi_hot_dry_no_rain': {
+          const rain = latestEnvSnapshot.rainNext3;
+          const kering = calc.ubi >= 34.0 && cur.relative_humidity_2m < 65;
+          const takHujan = rain === null || rain === undefined || rain < 60;
+          return {
+            triggered: kering && takHujan,
+            reason: `Suhu ubi ${calc.ubi.toFixed(1)}°C & RH ${cur.relative_humidity_2m}% • peluang hujan 3 jam ${rain === null || rain === undefined ? 'n/a' : rain + '%'}`
+          };
+        }
         case 'cloudy_rain':
           return {
             triggered: cur.cloud_cover >= 80,
@@ -1508,6 +1518,7 @@
         kolam_warm: 'Jika Suhu Air Kolam Ikan ≥ 31.0°C',
         kolam_cold: 'Jika Suhu Air Kolam Ikan ≤ 26.0°C',
         ubi_hot_dry: 'Jika Suhu Ubi Jalar ≥ 34.0°C & RH < 65%',
+        ubi_hot_dry_no_rain: 'Jika Suhu Ubi Jalar ≥ 34.0°C, RH < 65% & Peluang Hujan 3 jam < 60%',
         cloudy_rain: 'Jika Tutupan Awan Tebal (≥ 80% / Potensi Hujan)',
         high_wind: 'Jika Kecepatan Angin Kencang (≥ 18 km/j)'
       };
@@ -1658,7 +1669,7 @@
     // 4. INTEGRASI LIVE API OPEN-METEO & FALLBACK DATA
     // =========================================================================
     async function fetchBanjarasriWeather(isManual = false) {
-      const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${FARM_COORDS.lat}&longitude=${FARM_COORDS.lon}&current=temperature_2m,relative_humidity_2m,is_day,cloud_cover,wind_speed_10m,shortwave_radiation&hourly=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,is_day&past_hours=24&forecast_hours=2&timezone=Asia%2FBangkok`;
+      const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${FARM_COORDS.lat}&longitude=${FARM_COORDS.lon}&current=temperature_2m,relative_humidity_2m,is_day,cloud_cover,wind_speed_10m,shortwave_radiation&hourly=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,is_day,precipitation_probability&past_hours=24&forecast_hours=4&timezone=Asia%2FBangkok`;
 
       toggleRefreshSpin(true);
       try {
@@ -1762,8 +1773,13 @@
         temp5hAgo
       });
 
+      // Peluang hujan maksimum 3 jam ke depan (gerbang hujan untuk tugas siram)
+      const rainSeries = hourly.precipitation_probability || [];
+      const rainWindow = rainSeries.slice(curIdx, curIdx + 4).filter(v => v !== null && v !== undefined);
+      const rainNext3 = rainWindow.length ? Math.max(...rainWindow) : null;
+
       // Simpan snapshot terbaru untuk evaluasi tugas kondisional otomatis
-      latestEnvSnapshot = { cur, calc: nowCalc };
+      latestEnvSnapshot = { cur, calc: nowCalc, rainNext3 };
 
       // Update KPI Cards
       updateKpiCards(cur, nowCalc);
