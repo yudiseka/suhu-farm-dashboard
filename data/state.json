@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-23T14:21:27.596Z",
-  "updatedBy": "hermes-test",
+  "updatedAt": "2026-11-23T14:29:56.093Z",
+  "updatedBy": "dashboard",
   "farm": {
     "name": "Rencang Farm",
     "coords": {
@@ -138,7 +138,7 @@
       "triggerRule": "manual",
       "priority": "Rendah",
       "notes": "Cocokkan pembacaan termometer fisik dengan angka estimasi dashboard lalu sesuaikan slider Kalibrasi.",
-      "completed": false,
+      "completed": true,
       "createdAt": 1795391497559,
       "schedule": {
         "kind": "once",
@@ -147,10 +147,16 @@
         ],
         "days": []
       },
-      "completedAt": null
+      "completedAt": "2026-11-23T14:29:56.092Z"
     }
   ],
   "history": [
+    {
+      "taskId": "task-7",
+      "action": "done",
+      "by": "dashboard",
+      "at": "2026-11-23T14:29:56.093Z"
+    },
     {
       "taskId": "task-7",
       "action": "undone",
