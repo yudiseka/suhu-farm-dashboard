@@ -144,9 +144,11 @@ module.exports = async function handler(req, res) {
       }
       case 'tasks.replace': {
         if (!Array.isArray(body.tasks)) return send(res, 400, { ok: false, error: 'tasks harus array' });
-        state.tasks = body.tasks.map((t) => sanitizeTask(t, {}));
+        const next = body.tasks.map((t) => sanitizeTask(t, {}));
+        tasks.length = 0;
+        next.forEach((t) => tasks.push(t));
         logHistory(state, '*', 'replaced', by);
-        result = { count: state.tasks.length };
+        result = { count: tasks.length };
         break;
       }
       case 'tasks.reset_routine': {
