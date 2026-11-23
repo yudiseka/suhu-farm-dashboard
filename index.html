@@ -911,6 +911,83 @@
 
     let farmTasks = loadTasks();
 
+    // =========================================================================
+    // 2b. SINKRONISASI STATE DENGAN API (/api/state)
+    //     Sumber kebenaran: data/state.json di repo GitHub.
+    //     localStorage hanya cache offline + kunci API.
+    // =========================================================================
+    const API_KEY_STORAGE = 'rencang_farm_api_key';
+    const stateSync = { online: false, lastSync: null, dirty: false };
+
+    function getApiKey() {
+      try { return localStorage.getItem(API_KEY_STORAGE) || ''; } catch (e) { return ''; }
+    }
+
+    function setApiKey(key) {
+      try { localStorage.setItem(API_KEY_STORAGE, key); } catch (e) { /* ignore */ }
+    }
+
+    function ensureApiKey() {
+      let key = getApiKey();
+      if (key) return key;
+      key = (window.prompt('Kunci API dashboard (cukup sekali, disimpan di browser ini):', '') || '').trim();
+      if (key) setApiKey(key);
+      return key;
+    }
+
+    async function apiPost(payload) {
+      const key = ensureApiKey();
+      if (!key) return { ok: false, reason: 'no-key' };
+      const res = await fetch('/api/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': key },
+        body: JSON.stringify({ ...payload, by: 'dashboard' })
+      });
+      if (res.status === 401) return { ok: false, reason: 'bad-key' };
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, reason: json.error || ('HTTP ' + res.status) };
+      return { ok: true, json };
+    }
+
+    let apiQueue = Promise.resolve();
+
+    function queueApi(payload) {
+      const run = apiQueue.then(
+        () => apiPost(payload),
+        () => apiPost(payload)
+      );
+      apiQueue = run.catch(() => { /* ditangani pemanggil */ });
+      return run;
+    }
+
+    async function syncStateFromApi() {
+      try {
+        const res = await fetch('/api/state?t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        const state = (json && json.state) || {};
+
+        if (Array.isArray(state.tasks) && state.tasks.length && !stateSync.dirty) {
+          farmTasks = state.tasks;
+          try { localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(farmTasks)); } catch (e) { /* ignore */ }
+          refreshTaskUI();
+        }
+
+        if (state.offsets) {
+          offsets = { ...DEFAULT_OFFSETS, ...state.offsets };
+          try { localStorage.setItem('rencang_farm_offsets', JSON.stringify(offsets)); } catch (e) { /* ignore */ }
+          if (weatherPayload) renderDashboard(weatherPayload);
+        }
+
+        stateSync.online = true;
+        stateSync.lastSync = state.updatedAt ? new Date(state.updatedAt) : new Date();
+        stateSync.dirty = false;
+      } catch (e) {
+        stateSync.online = false;
+        console.warn('API state tidak tersedia, memakai cache lokal:', e.message);
+      }
+    }
+
     function loadTasks() {
       try {
         const saved = localStorage.getItem(TASKS_STORAGE_KEY);
@@ -931,6 +1008,42 @@
         console.warn('Gagal menyimpan tugas ke localStorage:', e);
       }
       refreshTaskUI();
+      pushTasksToApi();
+    }
+
+    async function pushTasksToApi() {
+      if (!getApiKey()) {
+        showToast('Tersimpan di browser ini. Isi kunci API untuk menyimpan ke server.');
+        return;
+      }
+      stateSync.dirty = true;
+      try {
+        const result = await queueApi({ action: 'tasks.replace', tasks: farmTasks });
+        if (result.ok) {
+          stateSync.online = true;
+          stateSync.dirty = false;
+          stateSync.lastSync = new Date();
+          showToast('Tugas tersimpan ke server.');
+        } else if (result.reason === 'bad-key') {
+          setApiKey('');
+          showToast('Kunci API ditolak. Perubahan hanya tersimpan di browser ini.');
+        } else if (result.reason === 'no-key') {
+          showToast('Tersimpan di browser ini saja.');
+        } else {
+          showToast('Gagal simpan ke server: ' + result.reason);
+        }
+      } catch (e) {
+        showToast('Server tidak terjangkau, perubahan tersimpan lokal.');
+      }
+    }
+
+    async function pushOffsetsToApi() {
+      if (!getApiKey()) return;
+      try {
+        await apiPost({ action: 'offsets.update', offsets });
+      } catch (e) {
+        console.warn('Gagal simpan kalibrasi ke server:', e.message);
+      }
     }
 
     /**
@@ -1379,6 +1492,7 @@
       if (weatherPayload) {
         renderDashboard(weatherPayload);
       }
+      pushOffsetsToApi();
       showToast('Kalibrasi offset berhasil disimpan & diterapkan.');
     }
 
@@ -2149,6 +2263,8 @@
       refreshTaskUI();
       startClocksAndAutoSync();
       fetchBanjarasriWeather(false);
+      syncStateFromApi();
+      setInterval(syncStateFromApi, 5 * 60 * 1000);
     });
   </script>
 </body>
