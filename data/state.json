@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-24T06:01:43.052832+07:00",
+  "updatedAt": "2026-11-24T06:21:54.443113+07:00",
   "updatedBy": "hermes",
   "farm": {
     "name": "Rencang Farm",
@@ -80,10 +80,10 @@
       "title": "Siram bedengan ubi jalar sore hari",
       "zone": "Lahan Ubi Jalar",
       "type": "kondisional",
-      "detail": "Jika Suhu Ubi Jalar ≥ 34.0°C & RH < 65%",
-      "triggerRule": "ubi_hot_dry",
+      "detail": "Jika Suhu Ubi Jalar ≥ 34.0°C, RH < 65% & Peluang Hujan 3 jam < 60%",
+      "triggerRule": "ubi_hot_dry_no_rain",
       "priority": "Sedang",
-      "notes": "Lahan pekarangan tanpa teduhan cepat kehilangan kelembapan permukaan saat terik.",
+      "notes": "Lahan pekarangan tanpa teduhan cepat kehilangan kelembapan permukaan saat terik. Batal disiram kalau peluang hujan ≥60% dalam 3 jam ke depan.",
       "completed": false,
       "createdAt": 1795362497558,
       "schedule": {
