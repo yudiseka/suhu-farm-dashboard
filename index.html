@@ -211,7 +211,6 @@
             </svg>
             Desa Banjarasri, Kec. Tanggulangin, Sidoarjo (-7.5075, 112.7578)
           </p>
-        </div>
 
         <!-- Right Date/Time & Calibration Trigger Pills -->
         <div class="flex flex-wrap items-center gap-2.5">
@@ -230,7 +229,13 @@
             <span class="hidden sm:inline">Kalibrasi</span>
           </button>
         </div>
-      </div>
+
+        <!-- Status sambungan data: server vs lokal -->
+        <div id="syncStatusBar" class="hidden flex flex-wrap items-center gap-2 text-xs font-semibold rounded-2xl px-4 py-2.5 border">
+          <span id="syncStatusDot" class="w-2 h-2 rounded-full"></span>
+          <span id="syncStatusText">-</span>
+          <button id="syncStatusAction" onclick="connectServer()" class="ml-auto underline decoration-dotted underline-offset-2 hover:opacity-80 cursor-pointer hidden">Pasang kunci API</button>
+        </div>
 
       <!-- 5 KPI Summary Cards Row -->
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -967,10 +972,16 @@
         const json = await res.json();
         const state = (json && json.state) || {};
 
-        if (Array.isArray(state.tasks) && state.tasks.length && !stateSync.dirty) {
-          farmTasks = state.tasks;
-          try { localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(farmTasks)); } catch (e) { /* ignore */ }
-          refreshTaskUI();
+        if (Array.isArray(state.tasks)) {
+          if (isLocalDirty()) {
+            // Ada perubahan lokal yang belum tersimpan ke server: jangan timpa.
+            if (getApiKey()) await pushTasksToApi(null);
+            else updateSyncStatusUI('local');
+          } else {
+            farmTasks = state.tasks;
+            try { localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(farmTasks)); } catch (e) { /* ignore */ }
+            refreshTaskUI();
+          }
         }
 
         if (state.offsets) {
@@ -982,8 +993,10 @@
         stateSync.online = true;
         stateSync.lastSync = state.updatedAt ? new Date(state.updatedAt) : new Date();
         stateSync.dirty = false;
+        updateSyncStatusUI(isLocalDirty() ? 'local' : 'server');
       } catch (e) {
         stateSync.online = false;
+        updateSyncStatusUI(getApiKey() ? 'error' : 'local', e.message);
         console.warn('API state tidak tersedia, memakai cache lokal:', e.message);
       }
     }
@@ -1001,40 +1014,105 @@
       return [...DEFAULT_TASKS];
     }
 
-    function persistTasks() {
+    const TASKS_DIRTY_KEY = 'rencang_farm_tasks_dirty';
+
+    function markLocalDirty(on) {
+      try {
+        if (on) localStorage.setItem(TASKS_DIRTY_KEY, '1');
+        else localStorage.removeItem(TASKS_DIRTY_KEY);
+      } catch (e) { /* ignore */ }
+    }
+
+    function isLocalDirty() {
+      try { return localStorage.getItem(TASKS_DIRTY_KEY) === '1'; } catch (e) { return false; }
+    }
+
+    function persistTasks(action) {
       try {
         localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(farmTasks));
       } catch (e) {
         console.warn('Gagal menyimpan tugas ke localStorage:', e);
       }
+      markLocalDirty(true);
       refreshTaskUI();
-      pushTasksToApi();
+      pushTasksToApi(action);
     }
 
-    async function pushTasksToApi() {
-      if (!getApiKey()) {
-        showToast('Tersimpan di browser ini. Isi kunci API untuk menyimpan ke server.');
+    let apiKeyPromptShown = false;
+
+    // action: payload API spesifik (task.toggle / task.delete / task.add / task.update).
+    // Tanpa action, seluruh daftar dikirim (dipakai hanya untuk retry saat offline).
+    async function pushTasksToApi(action) {
+      let key = getApiKey();
+      if (!key && !apiKeyPromptShown) {
+        apiKeyPromptShown = true;
+        key = ensureApiKey();
+      }
+      if (!key) {
+        updateSyncStatusUI('local');
+        showToast('Belum tersambung: perubahan hanya tersimpan di browser ini.');
         return;
       }
       stateSync.dirty = true;
       try {
-        const result = await queueApi({ action: 'tasks.replace', tasks: farmTasks });
+        const payload = action || { action: 'tasks.replace', tasks: farmTasks };
+        const result = await queueApi(payload);
         if (result.ok) {
+          markLocalDirty(false);
           stateSync.online = true;
           stateSync.dirty = false;
           stateSync.lastSync = new Date();
+          updateSyncStatusUI('server');
           showToast('Tugas tersimpan ke server.');
         } else if (result.reason === 'bad-key') {
           setApiKey('');
-          showToast('Kunci API ditolak. Perubahan hanya tersimpan di browser ini.');
+          updateSyncStatusUI('local');
+          showToast('Kunci API ditolak. Klik "Pasang kunci API" untuk mengganti.');
         } else if (result.reason === 'no-key') {
+          updateSyncStatusUI('local');
           showToast('Tersimpan di browser ini saja.');
         } else {
+          updateSyncStatusUI('error', result.reason);
           showToast('Gagal simpan ke server: ' + result.reason);
         }
       } catch (e) {
-        showToast('Server tidak terjangkau, perubahan tersimpan lokal.');
+        updateSyncStatusUI('error', e.message);
+        showToast('Server tidak terjangkau, perubahan tersimpan di browser ini.');
       }
+    }
+
+    function updateSyncStatusUI(mode, detail) {
+      const bar = document.getElementById('syncStatusBar');
+      const dot = document.getElementById('syncStatusDot');
+      const label = document.getElementById('syncStatusText');
+      const action = document.getElementById('syncStatusAction');
+      if (!bar || !dot || !label || !action) return;
+      const state = mode || (getApiKey() ? (stateSync.online ? 'server' : 'checking') : 'local');
+      bar.classList.remove('hidden');
+      const styles = {
+        server: ['bg-emerald-50 border-emerald-200 text-emerald-800', 'bg-emerald-500', 'Tersambung ke server — tugas tersimpan permanen.'],
+        local: ['bg-amber-50 border-amber-300 text-amber-900', 'bg-amber-500', 'Belum tersambung — perubahan hanya tersimpan di browser ini dan akan hilang saat refresh.'],
+        checking: ['bg-slate-50 border-slate-200 text-slate-600', 'bg-slate-400', 'Menyambung ke server...'],
+        error: ['bg-rose-50 border-rose-300 text-rose-800', 'bg-rose-500', 'Gagal menyimpan ke server' + (detail ? ': ' + detail : '.')]
+      };
+      const [barCls, dotCls, text] = styles[state] || styles.checking;
+      if (state === 'server') {
+        // Saat tersambung normal, jangan tampilkan bar apa pun.
+        bar.className = 'hidden';
+        return;
+      }
+      bar.className = 'flex flex-wrap items-center gap-2 text-xs font-semibold rounded-2xl px-4 py-2.5 border ' + barCls;
+      dot.className = 'w-2 h-2 rounded-full ' + dotCls;
+      label.textContent = text;
+      action.classList.remove('hidden');
+    }
+
+    async function connectServer() {
+      const key = (window.prompt('Tempel kunci API dashboard:', getApiKey()) || '').trim();
+      if (!key) return;
+      setApiKey(key);
+      await pushTasksToApi();
+      if (stateSync.online) await syncStateFromApi();
     }
 
     async function pushOffsetsToApi() {
@@ -1312,7 +1390,8 @@
       const idx = farmTasks.findIndex(t => t.id === taskId);
       if (idx === -1) return;
       farmTasks[idx].completed = !farmTasks[idx].completed;
-      persistTasks();
+      farmTasks[idx].completedAt = farmTasks[idx].completed ? new Date().toISOString() : null;
+      persistTasks({ action: 'task.toggle', id: taskId });
       showToast(farmTasks[idx].completed ? 'Tugas ditandai selesai.' : 'Status tugas dikembalikan ke aktif.');
     }
 
@@ -1320,7 +1399,7 @@
       const target = farmTasks.find(t => t.id === taskId);
       if (!target) return;
       farmTasks = farmTasks.filter(t => t.id !== taskId);
-      persistTasks();
+      persistTasks({ action: 'task.delete', id: taskId });
       showToast(`Tugas "${target.title}" telah dihapus.`);
     }
 
@@ -1332,7 +1411,7 @@
           resetCount++;
         }
       });
-      persistTasks();
+      persistTasks({ action: 'tasks.reset_routine' });
       if (resetCount > 0) {
         showToast(`${resetCount} tugas rutin direset untuk siklus baru.`);
       } else {
@@ -1426,23 +1505,20 @@
 
       if (!title || !detail) return;
 
+      let createdTask = null;
+
       if (id) {
         const idx = farmTasks.findIndex(t => t.id === id);
         if (idx !== -1) {
-          farmTasks[idx] = {
-            ...farmTasks[idx],
-            title,
-            zone,
-            priority,
-            type,
-            triggerRule,
-            detail,
-            notes
-          };
+          const patch = { title, zone, priority, type, triggerRule, detail, notes };
+          farmTasks[idx] = { ...farmTasks[idx], ...patch };
+          closeTaskModal();
+          persistTasks({ action: 'task.update', id, patch });
           showToast('Perubahan tugas berhasil disimpan.');
+          return;
         }
       } else {
-        farmTasks.unshift({
+        const newTask = {
           id: 'task-' + Date.now(),
           title,
           zone,
@@ -1453,12 +1529,14 @@
           notes,
           completed: false,
           createdAt: Date.now()
-        });
+        };
+        farmTasks.unshift(newTask);
+        createdTask = newTask;
         showToast('Tugas baru berhasil ditambahkan.');
       }
 
       closeTaskModal();
-      persistTasks();
+      persistTasks(createdTask ? { action: 'task.add', task: createdTask } : undefined);
     }
 
     // =========================================================================
@@ -2263,6 +2341,7 @@
       refreshTaskUI();
       startClocksAndAutoSync();
       fetchBanjarasriWeather(false);
+      updateSyncStatusUI();
       syncStateFromApi();
       setInterval(syncStateFromApi, 5 * 60 * 1000);
     });
