@@ -38,9 +38,23 @@ vercel.json           lewati build kalau commit hanya mengubah data/state.json
 
 Nilai valid: `zone` = `Kandang Ayam | Kolam Ikan | Lahan Ubi Jalar | Umum`;
 `type` = `rutin | kondisional | sekali`; `priority` = `Tinggi | Sedang | Rendah`;
-`triggerRule` = `manual | kandang_hot | kolam_warm | kolam_cold | ubi_hot_dry | cloudy_rain | high_wind`;
+`triggerRule` = `manual | kandang_hot | kolam_warm | kolam_cold | ubi_hot_dry | ubi_hot_dry_no_rain | cloudy_rain | hujan | high_wind`;
 `schedule` = `{kind: "daily"|"weekly"|"once"|"conditional", times: ["HH:MM"], days: [0..6]}`,
 `days` memakai 0 = Minggu (sama dengan JavaScript).
+
+## Deteksi Hujan (real-time)
+
+Dashboard menarik `current.precipitation`, `current.rain`, `current.showers` dan
+`current.weather_code` dari Open-Meteo. Sebelumnya parameter ini **tidak diminta**,
+makanya hujan tidak pernah dilaporkan walau awan 98%.
+
+- Indikator hujan ada di kartu **Cuaca & Angin Lokal** (baris "Hujan: ...").
+- Aturan hujan: `precipitation > 0 mm/jam` **atau** `weather_code >= 51` → hujan.
+- Kode WMO 0–3 = tidak hujan (termasuk mendung/awan tebal); 51+ = gerimis/hujan; 95+ = badai.
+- Alert otomatis ke-4 di panel "Peringatan & Rekomendasi" melaporkan status hujan.
+- Tugas kondisional baru: `triggerRule: "hujan"` — aktif saat hujan terdeteksi.
+- Refresh cuaca tiap **15 menit** (Open-Meteo `current` update tiap 15 menit).
+- Mode offline: curah hujan ditandai `null` → tampil "tidak diketahui", **tidak mengarang angka**.
 
 ## Environment Vercel
 

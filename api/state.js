@@ -6,7 +6,7 @@ const { readState, writeState } = require('../lib/store');
 const ZONES = ['Kandang Ayam', 'Kolam Ikan', 'Lahan Ubi Jalar', 'Umum'];
 const TYPES = ['rutin', 'kondisional', 'sekali'];
 const PRIORITIES = ['Tinggi', 'Sedang', 'Rendah'];
-const RULES = ['manual', 'kandang_hot', 'kolam_warm', 'kolam_cold', 'ubi_hot_dry', 'cloudy_rain', 'high_wind'];
+const RULES = ['manual', 'kandang_hot', 'kolam_warm', 'kolam_cold', 'ubi_hot_dry', 'ubi_hot_dry_no_rain', 'cloudy_rain', 'hujan', 'high_wind'];
 
 function send(res, status, payload) {
   res.statusCode = status;

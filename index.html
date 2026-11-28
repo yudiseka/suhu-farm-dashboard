@@ -174,7 +174,7 @@
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-xs font-bold text-teal-900 flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
-              Auto-Sync: Tiap 2 Jam
+              Auto-Sync: Tiap 15 Menit
             </span>
           </div>
           <p class="text-[11px] text-slate-600 mb-2">Pembaruan otomatis berikutnya:</p>
@@ -311,6 +311,10 @@
           </div>
           <div class="my-2.5 flex items-baseline gap-2">
             <span id="val-angin" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">-- <span class="text-sm font-semibold text-slate-500">km/j</span></span>
+          </div>
+          <div id="rainStatusRow" class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold rounded-lg px-2 py-1.5 bg-slate-50 text-slate-600">
+            <span id="rainIcon">☁️</span>
+            <span id="rainStatusText">Hujan: memuat...</span>
           </div>
           <div class="text-[11px] text-slate-500 flex items-center justify-between pt-2 border-t border-slate-100">
             <span>Kelembapan: <strong id="val-rh" class="text-slate-700">--%</strong></span>
@@ -468,7 +472,7 @@
 
             <!-- Sync Schedule Footer -->
             <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-              <span>Interval Tarik Data: <strong class="text-slate-700">2 Jam (7.200 dtk)</strong></span>
+              <span>Interval Tarik Data: <strong class="text-slate-700">15 Menit (900 dtk)</strong></span>
               <span id="syncModeTag" class="font-semibold text-teal-700">Live API</span>
             </div>
           </div>
@@ -694,6 +698,7 @@
             <option value="ubi_hot_dry">Jika Suhu Ubi Jalar ≥ 34.0°C & RH &lt; 65%</option>
             <option value="ubi_hot_dry_no_rain">Jika Suhu Ubi Jalar ≥ 34.0°C, RH &lt; 65% &amp; Peluang Hujan &lt; 60%</option>
             <option value="cloudy_rain">Jika Tutupan Awan Tebal (≥ 80% / Potensi Hujan)</option>
+            <option value="hujan">Jika Hujan Terdeteksi (Curah Hujan &gt; 0 mm/jam)</option>
             <option value="high_wind">Jika Kecepatan Angin Kencang (≥ 18 km/j)</option>
           </select>
           <p class="text-[11px] text-amber-900/80 leading-relaxed">
@@ -804,9 +809,10 @@
       name: 'Desa Banjarasri, Kec. Tanggulangin, Sidoarjo'
     };
 
-    // Interval Auto-Refresh = 2 Jam (7.200.000 milidetik)
-    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
-    let nextSyncTimestamp = Date.now() + TWO_HOURS_MS;
+    // Auto-Refresh cuaca = 15 menit. Open-Meteo `current` diperbarui tiap 15 menit,
+    // jadi polling lebih cepat tidak menambah informasi tapi tetap disebut "live".
+    const WEATHER_REFRESH_MS = 15 * 60 * 1000;
+    let nextSyncTimestamp = Date.now() + WEATHER_REFRESH_MS;
 
     // Konstanta default kalibrasi iklim mikro
     const DEFAULT_OFFSETS = {
@@ -1192,6 +1198,18 @@
             triggered: cur.cloud_cover >= 80,
             reason: `Tutupan awan ${cur.cloud_cover}% (mendung tebal)`
           };
+        case 'hujan': {
+          const mm = cur.precipitation;
+          if (mm === null || mm === undefined) {
+            return { triggered: false, reason: 'Data hujan tidak tersedia (offline)' };
+          }
+          return {
+            triggered: isRainingNow(cur),
+            reason: isRainingNow(cur)
+              ? `Hujan aktif ${Number(mm).toFixed(1)} mm/jam (${weatherCodeLabel(cur.weather_code)})`
+              : `Tidak hujan ${Number(mm).toFixed(1)} mm/jam (${weatherCodeLabel(cur.weather_code)})`
+          };
+        }
         case 'high_wind':
           return {
             triggered: cur.wind_speed_10m >= 18,
@@ -1520,6 +1538,7 @@
         ubi_hot_dry: 'Jika Suhu Ubi Jalar ≥ 34.0°C & RH < 65%',
         ubi_hot_dry_no_rain: 'Jika Suhu Ubi Jalar ≥ 34.0°C, RH < 65% & Peluang Hujan 3 jam < 60%',
         cloudy_rain: 'Jika Tutupan Awan Tebal (≥ 80% / Potensi Hujan)',
+        hujan: 'Jika Hujan Terdeteksi (Curah Hujan > 0 mm/jam)',
         high_wind: 'Jika Kecepatan Angin Kencang (≥ 18 km/j)'
       };
       if (presets[rule]) {
@@ -1669,7 +1688,7 @@
     // 4. INTEGRASI LIVE API OPEN-METEO & FALLBACK DATA
     // =========================================================================
     async function fetchBanjarasriWeather(isManual = false) {
-      const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${FARM_COORDS.lat}&longitude=${FARM_COORDS.lon}&current=temperature_2m,relative_humidity_2m,is_day,cloud_cover,wind_speed_10m,shortwave_radiation&hourly=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,is_day,precipitation_probability&past_hours=24&forecast_hours=4&timezone=Asia%2FBangkok`;
+      const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${FARM_COORDS.lat}&longitude=${FARM_COORDS.lon}&current=temperature_2m,relative_humidity_2m,is_day,cloud_cover,wind_speed_10m,shortwave_radiation,precipitation,rain,showers,weather_code&hourly=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,is_day,precipitation_probability&past_hours=24&forecast_hours=4&timezone=Asia%2FBangkok`;
 
       toggleRefreshSpin(true);
       try {
@@ -1688,7 +1707,7 @@
         if (isManual) showToast('Mode Offline: Menampilkan profil cuaca Banjarasri tersimpan.');
       } finally {
         toggleRefreshSpin(false);
-        nextSyncTimestamp = Date.now() + TWO_HOURS_MS;
+        nextSyncTimestamp = Date.now() + WEATHER_REFRESH_MS;
       }
     }
 
@@ -1731,7 +1750,12 @@
           is_day: hourlyIsDay[lastIdx],
           cloud_cover: hourlyCloud[lastIdx],
           wind_speed_10m: hourlyWind[lastIdx],
-          shortwave_radiation: hourlyIsDay[lastIdx] ? 640 : 0
+          shortwave_radiation: hourlyIsDay[lastIdx] ? 640 : 0,
+          // Mode offline: curah hujan TIDAK diketahui. Jangan mengarang angka hujan.
+          precipitation: null,
+          rain: null,
+          showers: null,
+          weather_code: null
         },
         hourly: {
           time: hourlyTime,
@@ -1808,6 +1832,61 @@
       document.getElementById('lastUpdatedText').textContent = `Sinkronisasi terakhir: ${hh}:${mm} WIB`;
     }
 
+    // Kode WMO Open-Meteo → label hujan (0-3 = tidak hujan, 51+ = hujan)
+    // Sumber: https://open-meteo.com/en/docs (WMO Weather interpretation codes)
+    function weatherCodeLabel(code) {
+      if (code === null || code === undefined) return 'Curah hujan tidak tersedia (mode offline)';
+      const map = {
+        0: 'Langit cerah', 1: 'Sebagian berawan', 2: 'Berawan', 3: 'Mendung',
+        45: 'Kabut', 48: 'Kabut berembun',
+        51: 'Gerimis ringan', 53: 'Gerimis', 55: 'Gerimis lebat',
+        56: 'Gerimis beku', 57: 'Gerimis beku lebat',
+        61: 'Hujan ringan', 63: 'Hujan sedang', 65: 'Hujan lebat',
+        66: 'Hujan beku ringan', 67: 'Hujan beku lebat',
+        71: 'Salju ringan', 73: 'Salju sedang', 75: 'Salju lebat', 77: 'Butiran salju',
+        80: 'Hujan deras ringan', 81: 'Hujan deras sedang', 82: 'Hujan deras hebat',
+        85: 'Hujan salju ringan', 86: 'Hujan salju lebat',
+        95: 'Badai petir', 96: 'Badai petir + hujan es', 99: 'Badai petir + hujan es hebat'
+      };
+      return map[code] || `Kode cuaca ${code}`;
+    }
+
+    function isRainingNow(cur) {
+      if (!cur) return false;
+      const mm = Number(cur.precipitation || 0);
+      if (mm > 0) return true;
+      // weather_code 51+ = hujan/gerimis/salju; 95+ = badai petir
+      const code = Number(cur.weather_code);
+      return code >= 51;
+    }
+
+    function renderRainStatus(cur) {
+      const row = document.getElementById('rainStatusRow');
+      const icon = document.getElementById('rainIcon');
+      const text = document.getElementById('rainStatusText');
+      if (!row || !icon || !text) return;
+
+      const mm = cur.precipitation;
+      const unavailable = mm === null || mm === undefined;
+      const hujan = !unavailable && isRainingNow(cur);
+      const label = weatherCodeLabel(cur.weather_code);
+      const mmText = unavailable ? '' : ` • ${Number(mm).toFixed(1)} mm/jam`;
+
+      if (unavailable) {
+        row.className = 'mb-2 flex items-center gap-1.5 text-[11px] font-semibold rounded-lg px-2 py-1.5 bg-slate-50 text-slate-500';
+        icon.textContent = '❓';
+        text.textContent = `Hujan: tidak diketahui (offline)${mmText}`;
+      } else if (hujan) {
+        row.className = 'mb-2 flex items-center gap-1.5 text-[11px] font-bold rounded-lg px-2 py-1.5 bg-blue-100 text-blue-800';
+        icon.textContent = '🌧️';
+        text.textContent = `HUJAN: ${label}${mmText}`;
+      } else {
+        row.className = 'mb-2 flex items-center gap-1.5 text-[11px] font-semibold rounded-lg px-2 py-1.5 bg-teal-50 text-teal-700';
+        icon.textContent = '☀️';
+        text.textContent = `Tidak hujan: ${label}${mmText}`;
+      }
+    }
+
     function updateKpiCards(cur, calc) {
       // 1. Banjarasri
       document.getElementById('val-banjarasri').textContent = `${calc.banjarasri.toFixed(1)}°C`;
@@ -1869,6 +1948,7 @@
       document.getElementById('badge-awan').textContent = `Awan ${cur.cloud_cover}%`;
       const rad = cur.shortwave_radiation !== undefined ? Math.round(cur.shortwave_radiation) : (cur.is_day ? 520 : 0);
       document.getElementById('sub-radiasi').textContent = `${rad} W/m²`;
+      renderRainStatus(cur);
     }
 
     function buildTwoHourSeries(hourly, endIdx) {
@@ -2187,6 +2267,33 @@
         });
       }
 
+      // 4. Evaluasi Hujan (curah hujan langsung dari Open-Meteo)
+      if (cur.precipitation === null || cur.precipitation === undefined) {
+        alerts.push({
+          type: 'info',
+          bg: 'bg-slate-50 border-slate-200',
+          iconColor: 'text-slate-500 bg-slate-100',
+          title: 'Data Hujan Tidak Tersedia (Offline)',
+          desc: 'Tidak dapat memastikan hujan. Periksa koneksi dan klik Refresh Data.'
+        });
+      } else if (isRainingNow(cur)) {
+        alerts.push({
+          type: 'warning',
+          bg: 'bg-blue-50 border-blue-200',
+          iconColor: 'text-blue-600 bg-blue-100',
+          title: `Hujan Terdeteksi — ${weatherCodeLabel(cur.weather_code)} (${Number(cur.precipitation).toFixed(1)} mm/jam)`,
+          desc: 'Hujan aktif di Banjarasri. Tunda penyiraman ubi & pakan ikan; cek talang air kandang dan aerasi kolam.'
+        });
+      } else {
+        alerts.push({
+          type: 'ok',
+          bg: 'bg-teal-50/70 border-teal-100',
+          iconColor: 'text-teal-600 bg-teal-100',
+          title: `Tidak Hujan — ${weatherCodeLabel(cur.weather_code)}`,
+          desc: `Curah hujan ${Number(cur.precipitation).toFixed(1)} mm/jam. ${latestEnvSnapshot && latestEnvSnapshot.rainNext3 !== null ? 'Peluang hujan 3 jam ke depan ' + latestEnvSnapshot.rainNext3 + '%.' : ''}`
+        });
+      }
+
       document.getElementById('alertCountBadge').textContent = `${alerts.length} Info`;
 
       container.innerHTML = alerts.map(item => `
@@ -2344,7 +2451,7 @@
       }, 3200);
     }
 
-    // Jam Real-Time & Hitung Mundur Auto-Sync 2 Jam
+    // Jam Real-Time & Hitung Mundur Auto-Sync 15 Menit
     function startClocksAndAutoSync() {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
@@ -2359,7 +2466,7 @@
 
         document.getElementById('liveClockDisplay').textContent = `${day} ${month} ${year} | ${hh}:${mm}:${ss} WIB`;
 
-        // Hitung mundur 2 jam
+        // Hitung mundur 15 menit
         const remainingMs = Math.max(0, nextSyncTimestamp - Date.now());
         const totalSec = Math.floor(remainingMs / 1000);
         const remH = String(Math.floor(totalSec / 3600)).padStart(2, '0');
