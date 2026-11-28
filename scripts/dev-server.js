@@ -6,7 +6,8 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const handler = require('../api/state');
+const stateHandler = require('../api/state');
+const bmkgHandler = require('../api/bmkg');
 
 const PORT = Number(process.argv[2] || process.env.PORT || 8787);
 const ROOT = path.join(__dirname, '..');
@@ -19,10 +20,19 @@ const server = http.createServer((req, res) => {
     req.on('data', (c) => { raw += c; });
     req.on('end', () => {
       req.body = raw;
-      handler(req, res).catch((e) => {
+      stateHandler(req, res).catch((e) => {
         res.statusCode = 500;
         res.end(JSON.stringify({ ok: false, error: String(e) }));
       });
+    });
+    return;
+  }
+  if (url.pathname === '/api/bmkg') {
+    bmkgHandler(req, res).catch((e) => {
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.end(JSON.stringify({ ok: false, error: String(e) }));
     });
     return;
   }

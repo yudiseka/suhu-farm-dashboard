@@ -481,6 +481,56 @@
         </div>
       </section>
 
+      <!-- BMKG: Prakiraan 3 Hari & Peringatan Dini -->
+      <section class="space-y-3 pb-6">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-slate-900">Prakiraan BMKG & Peringatan Dini</h3>
+            <p class="text-xs text-slate-500">Sumber: BMKG (Badan Meteorologi, Klimatologi, dan Geofisika) — data terbuka, tanpa sensor</p>
+          </div>
+          <span id="bmkgStatusPill" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+            Memuat data BMKG...
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <!-- Prakiraan 3 hari -->
+          <div class="lg:col-span-8 bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-white">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <div>
+                <h4 class="font-bold text-slate-900 text-sm sm:text-base">Prakiraan 3 Hari — Desa Banjarasri</h4>
+                <p class="text-xs text-slate-500">Suhu, curah hujan, kelembapan & angin per periode 3 jam (WIB) • update tiap 3 jam</p>
+              </div>
+              <span id="bmkgForecastTime" class="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg">–</span>
+            </div>
+            <div id="bmkgForecastGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="text-xs text-slate-500">Memuat prakiraan BMKG...</div>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-3">Tindakan: hujan &gt; 0 mm → tunda pupuk/penyiraman ubi &amp; kurangi pakan ikan; suhu naik → cek aerasi kolam &amp; air minum ayam. Prakiraan bukan pengganti pengukuran lapangan.</p>
+          </div>
+
+          <!-- Peringatan dini -->
+          <div class="lg:col-span-4 bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-white flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h4 class="font-bold text-slate-900 text-sm sm:text-base">Peringatan Dini Cuaca</h4>
+                  <p class="text-xs text-slate-500">Kec. Tanggulangin &amp; sekitarnya • update tiap ±2 jam</p>
+                </div>
+                <span id="bmkgNowcastCount" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600">–</span>
+              </div>
+              <div id="bmkgNowcastList" class="space-y-3 text-xs text-slate-500">
+                Memuat peringatan dini...
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+              Tindakan jika peringatan aktif: amankan talang/atap kandang, periksa drainase bedengan, kurangi pakan ikan, siapkan aerasi.
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Dashboard Summary Widget: Tugas Hari Ini & Peringatan Kondisi -->
       <section class="pb-6">
         <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-white">
@@ -815,6 +865,22 @@
     // jadi polling lebih cepat tidak menambah informasi tapi tetap disebut "live".
     const WEATHER_REFRESH_MS = 15 * 60 * 1000;
     let nextSyncTimestamp = Date.now() + WEATHER_REFRESH_MS;
+
+    // Sumber data terbuka BMKG (tanpa API key, CORS diizinkan).
+    // Kode adm4 Banjarasri, Tanggulangin, Sidoarjo = 35.15.06.2008 (Dukcapil 2024).
+    // Prakiraan 3 harian BMKG diperbarui tiap 3 jam; nowcast tiap ~2 jam.
+    const BMKG_ADM4 = '35.15.06.2008';
+    // Karena api.bmkg.go.id tidak mengirim header CORS, browser memanggil
+    // proxy server-side /api/bmkg (Vercel serverless / dev-server lokal).
+    const BMKG_FORECAST_URL = '/api/bmkg?kind=forecast';
+    const BMKG_NOWCAST_URL = '/api/bmkg?kind=nowcast';
+    const BMKG_FORECAST_REFRESH_MS = 3 * 60 * 60 * 1000;
+    const BMKG_NOWCAST_REFRESH_MS = 2 * 60 * 60 * 1000;
+    let nextBmkgForecastAt = 0;
+    let nextBmkgNowcastAt = 0;
+    let bmkgPayload = null;   // { forecast, nowcast }
+    // Wilayah yang dianggap "dekat farm" untuk filter peringatan dini.
+    const FARM_NEARBY_TERMS = ['tanggulangin', 'sidoarjo', 'banjarasri'];
 
     // Konstanta default kalibrasi iklim mikro
     const DEFAULT_OFFSETS = {
@@ -1778,6 +1844,215 @@
     }
 
     // =========================================================================
+    // 4b. INTEGRASI DATA TERBUKA BMKG — PRAKIRAAN 3 HARI & PERINGATAN DINI
+    // =========================================================================
+
+    function bmkgWeatherIcon(desc) {
+      const d = String(desc || '').toLowerCase();
+      if (d.includes('petir') || d.includes('badai')) return '⛈️';
+      if (d.includes('hujan lebat') || d.includes('hujan deras')) return '🌧️';
+      if (d.includes('hujan')) return '🌦️';
+      if (d.includes('kabur') || d.includes('kabut')) return '🌫️';
+      if (d.includes('berawan')) return '☁️';
+      if (d.includes('cerah')) return '☀️';
+      return '🌤️';
+    }
+
+    function bmkgRainAction(mm) {
+      const v = Number(mm);
+      if (!Number.isFinite(v)) return 'Cek manual kondisi lapangan.';
+      if (v >= 5) return 'Hujan lebat: tunda semua penyiraman & pupuk, cek drainase & aerasi.';
+      if (v > 0) return 'Ada hujan: tunda penyiraman ubi & pupuk; kurangi pakan ikan.';
+      return 'Tidak hujan: penyiraman/pakan sesuai jadwal, pantau kelembapan.';
+    }
+
+    function renderBmkgForecast() {
+      const grid = document.getElementById('bmkgForecastGrid');
+      const timeLabel = document.getElementById('bmkgForecastTime');
+      const f = bmkgPayload && bmkgPayload.forecast;
+      if (!f || !Array.isArray(f.days) || !f.days.length) {
+        grid.innerHTML = '<div class="text-xs text-slate-500">Prakiraan BMKG belum tersedia (offline).</div>';
+        timeLabel.textContent = '–';
+        return;
+      }
+      timeLabel.textContent = f.analysisDate ? `Analisis: ${f.analysisDate}` : 'BMKG 3 harian';
+      grid.innerHTML = f.days.map((day, i) => {
+        const periode = (day.periods || []).map(p => `
+          <div class="flex items-center justify-between gap-2 py-1.5 border-b border-slate-100 last:border-0">
+            <span class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 w-20 shrink-0">
+              <span>${bmkgWeatherIcon(p.desc)}</span><span>${p.localTime || '-'}</span>
+            </span>
+            <span class="text-[11px] text-slate-600 flex-1 truncate">${p.desc || '-'}</span>
+            <span class="text-[11px] font-bold text-slate-800 whitespace-nowrap">${p.t === null ? '–' : p.t + '°C'}</span>
+            <span class="text-[11px] font-semibold ${Number(p.tp) > 0 ? 'text-blue-600' : 'text-slate-400'} whitespace-nowrap">${p.tp === null ? '–' : p.tp + ' mm'}</span>
+          </div>
+        `).join('');
+        const totalHujan = (day.periods || []).reduce((a, p) => a + (Number(p.tp) || 0), 0);
+        const maxT = Math.max(...(day.periods || []).map(p => Number(p.t) || 0));
+        return `
+          <div class="rounded-xl border border-teal-100 bg-teal-50/40 p-3">
+            <div class="flex items-center justify-between mb-2">
+              <h5 class="text-xs font-extrabold text-teal-900">Hari ${i + 1}</h5>
+              <span class="text-[10px] font-semibold text-slate-500">maks ${maxT || '–'}°C • hujan ${totalHujan.toFixed(1)} mm</span>
+            </div>
+            <div>${periode || '<div class="text-[11px] text-slate-400">Tanpa data periode</div>'}</div>
+            <p class="text-[10px] text-slate-500 mt-2 pt-2 border-t border-teal-100">${bmkgRainAction(totalHujan)}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderBmkgNowcast() {
+      const box = document.getElementById('bmkgNowcastList');
+      const badge = document.getElementById('bmkgNowcastCount');
+      const n = bmkgPayload && bmkgPayload.nowcast;
+      if (!n) {
+        box.innerHTML = '<div>Peringatan dini belum tersedia (offline).</div>';
+        badge.textContent = '–';
+        return;
+      }
+      if (!n.hasWarnings) {
+        box.innerHTML = `
+          <div class="p-3 rounded-xl border border-teal-100 bg-teal-50 flex items-start gap-2.5">
+            <span class="text-teal-600 text-base leading-none">✅</span>
+            <div>
+              <h5 class="text-xs font-bold text-teal-900">Tidak ada peringatan aktif</h5>
+              <p class="text-[11px] text-teal-800 mt-0.5">Tidak ada peringatan dini BMKG untuk Kec. Tanggulangin saat ini. Tetap pantau prakiraan 3 hari &amp; kondisi cuaca lapangan.</p>
+            </div>
+          </div>
+        `;
+        badge.textContent = 'Aman';
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-800';
+        return;
+      }
+      // Tandai peringatan yang menyebut wilayah dekat farm; sisanya tetap ditampilkan sebagai konteks.
+      const items = n.warnings.map(w => {
+        const near = FARM_NEARBY_TERMS.some(t => String(w.text || '').toLowerCase().includes(t));
+        return `
+          <div class="p-3 rounded-xl border ${near ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50'}">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <h5 class="text-xs font-bold ${near ? 'text-rose-900' : 'text-amber-900'}">${near ? '⚠️ Dekat farm — ' : ''}${w.event || 'Peringatan cuaca'}</h5>
+              <span class="text-[10px] font-semibold ${near ? 'text-rose-700' : 'text-amber-700'}">${w.expires || ''}</span>
+            </div>
+            <p class="text-[11px] ${near ? 'text-rose-800' : 'text-amber-800'} leading-relaxed">${w.text || ''}</p>
+          </div>
+        `;
+      }).join('');
+      box.innerHTML = items;
+      badge.textContent = `${n.warnings.length} Aktif`;
+      badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700';
+    }
+
+    function renderBmkgStatus() {
+      const pill = document.getElementById('bmkgStatusPill');
+      if (!pill) return;
+      const okForecast = !!(bmkgPayload && bmkgPayload.forecast);
+      const okNowcast = !!(bmkgPayload && bmkgPayload.nowcast);
+      if (okForecast && okNowcast) {
+        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200';
+        pill.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span>BMKG Terhubung';
+      } else {
+        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 border border-amber-200';
+        pill.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span>BMKG Sebagian / Offline';
+      }
+    }
+
+    function normalizeBmkgForecast(raw) {
+      if (!raw || !raw.data || !raw.data[0] || !Array.isArray(raw.data[0].cuaca)) return null;
+      const days = raw.data[0].cuaca.map(day => ({
+        periods: (day || []).map(p => ({
+          localTime: (p.local_datetime || '').slice(11, 16) || null,
+          t: (p.t === null || p.t === undefined) ? null : Number(p.t),
+          tp: (p.tp === null || p.tp === undefined) ? null : Number(p.tp),
+          desc: p.weather_desc || p.weather_desc_en || null
+        }))
+      }));
+      const analysisDate = raw.data[0].cuaca[0] && raw.data[0].cuaca[0][0]
+        ? (raw.data[0].cuaca[0][0].analysis_date || null) : null;
+      return { days, analysisDate };
+    }
+
+    async function fetchBmkgForecast(isManual = false) {
+      try {
+        const res = await fetch(BMKG_FORECAST_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const wrapper = await res.json();
+        if (!wrapper.ok) throw new Error(wrapper.error || 'Proxy BMKG gagal');
+        // Proxy mengembalikan payload BMKG mentah di field `data`.
+        const forecast = normalizeBmkgForecast(wrapper.data);
+        if (!forecast) throw new Error('Format prakiraan BMKG tidak dikenali');
+        bmkgPayload = bmkgPayload || {};
+        bmkgPayload.forecast = forecast;
+        if (isManual) showToast('Prakiraan BMKG 3 hari berhasil diperbarui.');
+      } catch (err) {
+        console.warn('Gagal tarik prakiraan BMKG:', err);
+        if (bmkgPayload) delete bmkgPayload.forecast;
+      } finally {
+        nextBmkgForecastAt = Date.now() + BMKG_FORECAST_REFRESH_MS;
+        renderBmkgForecast();
+        renderBmkgStatus();
+      }
+    }
+
+    function normalizeBmkgNowcast(checkRaw, jatimRaw) {
+      const check = checkRaw && checkRaw.data;
+      const localWarnings = [];
+      if (check && Array.isArray(check.warnings)) {
+        check.warnings.forEach(w => localWarnings.push({
+          event: w.event || w.headline || 'Peringatan cuaca',
+          text: w.description || w.headline || '',
+          expires: w.expires ? String(w.expires).slice(0, 16).replace('T', ' ') : ''
+        }));
+      }
+      // Peringatan Jawa Timur: tampilkan hanya yang menyebut wilayah dekat farm.
+      let jatimWarnings = [];
+      if (jatimRaw && Array.isArray(jatimRaw.data)) {
+        jatimWarnings = jatimRaw.data
+          .filter(x => {
+            const text = ((x.warning && x.warning.description) || x.description || '').toLowerCase();
+            return FARM_NEARBY_TERMS.some(t => text.includes(t));
+          })
+          .map(x => ({
+            event: (x.warning && x.warning.event) || 'Peringatan cuaca',
+            text: (x.warning && x.warning.description) || x.description || '',
+            expires: (x.warning && x.warning.expires) ? String(x.warning.expires).slice(0, 16).replace('T', ' ') : ''
+          }));
+      }
+      const warnings = [];
+      localWarnings.forEach(w => warnings.push(w));
+      jatimWarnings.forEach(w => {
+        if (!warnings.some(e => e.text === w.text && e.event === w.event)) warnings.push(w);
+      });
+      return { hasWarnings: warnings.length > 0, warnings };
+    }
+
+    async function fetchBmkgNowcast(isManual = false) {
+      try {
+        const res = await fetch(BMKG_NOWCAST_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const wrapper = await res.json();
+        if (!wrapper.ok) throw new Error(wrapper.error || 'Proxy BMKG gagal');
+        // Proxy mengembalikan { check, jatim } dari dua sumber BMKG.
+        const nowcast = normalizeBmkgNowcast(wrapper.check, wrapper.jatim);
+        bmkgPayload = bmkgPayload || {};
+        bmkgPayload.nowcast = nowcast;
+        if (isManual) showToast('Peringatan dini BMKG berhasil diperbarui.');
+      } catch (err) {
+        console.warn('Gagal tarik peringatan dini BMKG:', err);
+        if (bmkgPayload) delete bmkgPayload.nowcast;
+      } finally {
+        nextBmkgNowcastAt = Date.now() + BMKG_NOWCAST_REFRESH_MS;
+        renderBmkgNowcast();
+        renderBmkgStatus();
+      }
+    }
+
+    function fetchBmkgAll(isManual = false) {
+      fetchBmkgForecast(isManual);
+      fetchBmkgNowcast(isManual);
+    }
+
+    // =========================================================================
     // 5. RENDER KPI, GRAFIK, PETA SKEMA & PERINGATAN OTOMATIS
     // =========================================================================
     function renderDashboard(payload) {
@@ -2391,6 +2666,7 @@
 
     function manualRefresh() {
       fetchBanjarasriWeather(true);
+      fetchBmkgAll(true);
     }
 
     function toggleRefreshSpin(spinning) {
@@ -2451,6 +2727,10 @@
         if (remainingMs <= 0) {
           fetchBanjarasriWeather(false);
         }
+
+        // BMKG: prakiraan 3 hari tiap 3 jam, peringatan dini tiap 2 jam.
+        if (Date.now() >= nextBmkgForecastAt) fetchBmkgForecast(false);
+        if (Date.now() >= nextBmkgNowcastAt) fetchBmkgNowcast(false);
       }
 
       tick();
@@ -2462,6 +2742,7 @@
       refreshTaskUI();
       startClocksAndAutoSync();
       fetchBanjarasriWeather(false);
+      fetchBmkgAll(false);
       await handleClaimLink();
       updateSyncStatusUI();
       syncStateFromApi();
