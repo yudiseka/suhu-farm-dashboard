@@ -1688,7 +1688,7 @@
     // 4. INTEGRASI LIVE API OPEN-METEO & FALLBACK DATA
     // =========================================================================
     async function fetchBanjarasriWeather(isManual = false) {
-      const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${FARM_COORDS.lat}&longitude=${FARM_COORDS.lon}&current=temperature_2m,relative_humidity_2m,is_day,cloud_cover,wind_speed_10m,shortwave_radiation,precipitation,rain,showers,weather_code&hourly=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,is_day,precipitation_probability&past_hours=24&forecast_hours=4&timezone=Asia%2FBangkok`;
+      const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${FARM_COORDS.lat}&longitude=${FARM_COORDS.lon}&current=temperature_2m,relative_humidity_2m,is_day,cloud_cover,wind_speed_10m,shortwave_radiation,precipitation,rain,showers,weather_code&hourly=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,is_day,precipitation,precipitation_probability&past_hours=24&forecast_hours=4&timezone=Asia%2FBangkok`;
 
       toggleRefreshSpin(true);
       try {
@@ -1802,8 +1802,14 @@
       const rainWindow = rainSeries.slice(curIdx, curIdx + 4).filter(v => v !== null && v !== undefined);
       const rainNext3 = rainWindow.length ? Math.max(...rainWindow) : null;
 
+      // Akumulasi hujan 3 jam TERAKHIR — menjawab "tadi hujan tapi dashboard tidak bilang"
+      // even jika hujan sudah reda saat dicek, angka ini tetap tampil. null = tidak diketahui.
+      const precSeries = hourly.precipitation || [];
+      const pastWindow = precSeries.slice(Math.max(0, curIdx - 3), curIdx + 1).filter(v => v !== null && v !== undefined);
+      const rainPast3 = pastWindow.length ? Number(pastWindow.reduce((a, b) => a + b, 0).toFixed(1)) : null;
+
       // Simpan snapshot terbaru untuk evaluasi tugas kondisional otomatis
-      latestEnvSnapshot = { cur, calc: nowCalc, rainNext3 };
+      latestEnvSnapshot = { cur, calc: nowCalc, rainNext3, rainPast3 };
 
       // Update KPI Cards
       updateKpiCards(cur, nowCalc);
@@ -1871,19 +1877,27 @@
       const hujan = !unavailable && isRainingNow(cur);
       const label = weatherCodeLabel(cur.weather_code);
       const mmText = unavailable ? '' : ` • ${Number(mm).toFixed(1)} mm/jam`;
+      const past = (typeof latestEnvSnapshot !== 'undefined' && latestEnvSnapshot && latestEnvSnapshot.rainPast3 !== null)
+        ? latestEnvSnapshot.rainPast3 : null;
+      const pastText = past === null ? '' : ` • 3 jam lalu ${past.toFixed(1)} mm`;
 
       if (unavailable) {
         row.className = 'mb-2 flex items-center gap-1.5 text-[11px] font-semibold rounded-lg px-2 py-1.5 bg-slate-50 text-slate-500';
         icon.textContent = '❓';
-        text.textContent = `Hujan: tidak diketahui (offline)${mmText}`;
+        text.textContent = `Hujan: tidak diketahui (offline)${pastText}`;
       } else if (hujan) {
         row.className = 'mb-2 flex items-center gap-1.5 text-[11px] font-bold rounded-lg px-2 py-1.5 bg-blue-100 text-blue-800';
         icon.textContent = '🌧️';
-        text.textContent = `HUJAN: ${label}${mmText}`;
+        text.textContent = `HUJAN: ${label}${mmText}${pastText}`;
+      } else if (past !== null && past > 0) {
+        // Hujan sudah reda, tapi baru saja turun — tetap laporkan
+        row.className = 'mb-2 flex items-center gap-1.5 text-[11px] font-bold rounded-lg px-2 py-1.5 bg-blue-50 text-blue-700';
+        icon.textContent = '🌦️';
+        text.textContent = `Baru hujan: ${past.toFixed(1)} mm/3 jam${mmText} (sekarang ${label})`;
       } else {
         row.className = 'mb-2 flex items-center gap-1.5 text-[11px] font-semibold rounded-lg px-2 py-1.5 bg-teal-50 text-teal-700';
         icon.textContent = '☀️';
-        text.textContent = `Tidak hujan: ${label}${mmText}`;
+        text.textContent = `Tidak hujan: ${label}${mmText}${pastText}`;
       }
     }
 
@@ -2283,6 +2297,14 @@
           iconColor: 'text-blue-600 bg-blue-100',
           title: `Hujan Terdeteksi — ${weatherCodeLabel(cur.weather_code)} (${Number(cur.precipitation).toFixed(1)} mm/jam)`,
           desc: 'Hujan aktif di Banjarasri. Tunda penyiraman ubi & pakan ikan; cek talang air kandang dan aerasi kolam.'
+        });
+      } else if (latestEnvSnapshot && latestEnvSnapshot.rainPast3 !== null && latestEnvSnapshot.rainPast3 > 0) {
+        alerts.push({
+          type: 'warning',
+          bg: 'bg-blue-50/70 border-blue-200',
+          iconColor: 'text-blue-600 bg-blue-100',
+          title: `Baru Saja Hujan — ${latestEnvSnapshot.rainPast3.toFixed(1)} mm/3 jam`,
+          desc: `Hujan sudah reda sekarang (${weatherCodeLabel(cur.weather_code)}). Cek talang air kandang, drainase bedengan ubi, dan pastikan aerasi kolam tetap jalan.`
         });
       } else {
         alerts.push({
