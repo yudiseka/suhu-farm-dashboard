@@ -49,6 +49,34 @@
         "desc": "Hembusan angin {wind} km/j membantu membuang panas atap fiber secara alami."
       },
       {
+        "id": "terasa_panas",
+        "zone": "Umum",
+        "order": 15,
+        "enabled": true,
+        "tone": "danger",
+        "when": {
+          "metric": "feels",
+          "op": ">=",
+          "value": 35
+        },
+        "title": "Suhu Terasa Tinggi ({feels}°C)",
+        "desc": "Suhu udara {banjarasri}°C terasa {feels}°C karena kelembapan {rh}%. Tunda kerja fisik berat 12.00–15.00, perbanyak minum, cek air minum ayam & aerasi kolam."
+      },
+      {
+        "id": "terasa_aman",
+        "zone": "Umum",
+        "order": 16,
+        "enabled": true,
+        "tone": "info",
+        "when": {
+          "metric": "feels",
+          "op": "<",
+          "value": 35
+        },
+        "title": "Suhu Terasa Masih Aman ({feels}°C)",
+        "desc": "Suhu udara {banjarasri}°C, terasa {feels}°C. Tetap pantau saat radiasi matahari meningkat siang hari."
+      },
+      {
         "id": "kolam_optimal",
         "zone": "Kolam Ikan",
         "order": 20,

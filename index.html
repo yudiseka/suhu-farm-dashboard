@@ -241,6 +241,7 @@
           <div class="my-2.5 flex items-baseline gap-2">
             <span id="val-banjarasri" class="text-3xl font-extrabold text-slate-900 tracking-tight">--.-°C</span>
           </div>
+          <div class="mb-1 text-[11px] font-semibold text-orange-600" id="feels-banjarasri">Terasa --.-°C</div>
           <div class="text-[11px] text-slate-500 flex items-center justify-between pt-2 border-t border-slate-100">
             <span>Data Open-Meteo</span>
             <span id="sub-banjarasri" class="font-semibold text-slate-700">RH --%</span>
@@ -878,7 +879,7 @@
     // 4. INTEGRASI LIVE API OPEN-METEO & FALLBACK DATA
     // =========================================================================
     async function fetchBanjarasriWeather(isManual = false) {
-      const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${FARM_COORDS.lat}&longitude=${FARM_COORDS.lon}&current=temperature_2m,relative_humidity_2m,is_day,cloud_cover,wind_speed_10m,shortwave_radiation,precipitation,rain,showers,weather_code&hourly=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,is_day,precipitation,precipitation_probability&past_hours=24&forecast_hours=4&timezone=Asia%2FBangkok`;
+      const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${FARM_COORDS.lat}&longitude=${FARM_COORDS.lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,cloud_cover,wind_speed_10m,shortwave_radiation,precipitation,rain,showers,weather_code&hourly=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,is_day,precipitation,precipitation_probability&past_hours=24&forecast_hours=4&timezone=Asia%2FBangkok`;
 
       toggleRefreshSpin(true);
       try {
@@ -936,6 +937,7 @@
         current: {
           time: hourlyTime[lastIdx],
           temperature_2m: hourlyTemp[lastIdx],
+          apparent_temperature: hourlyTemp[lastIdx],
           relative_humidity_2m: hourlyRh[lastIdx],
           is_day: hourlyIsDay[lastIdx],
           cloud_cover: hourlyCloud[lastIdx],
@@ -1390,12 +1392,12 @@
       } else if (hujan) {
         row.className = 'mb-2 flex items-center gap-1.5 text-[11px] font-bold rounded-lg px-2 py-1.5 bg-blue-100 text-blue-800';
         icon.textContent = '🌧️';
-        text.textContent = `HUJAN: ${label}${mmText}${pastText}`;
+        text.textContent = `Hujan: ${label}${mmText}${pastText} (estimasi model)`;
       } else if (past !== null && past > 0) {
         // Hujan sudah reda, tapi baru saja turun — tetap laporkan
         row.className = 'mb-2 flex items-center gap-1.5 text-[11px] font-bold rounded-lg px-2 py-1.5 bg-blue-50 text-blue-700';
         icon.textContent = '🌦️';
-        text.textContent = `Baru hujan: ${past.toFixed(1)} mm/3 jam${mmText} (sekarang ${label})`;
+        text.textContent = `Baru hujan: ${past.toFixed(1)} mm/3 jam${mmText} (sekarang ${label}, estimasi model)`;
       } else {
         row.className = 'mb-2 flex items-center gap-1.5 text-[11px] font-semibold rounded-lg px-2 py-1.5 bg-teal-50 text-teal-700';
         icon.textContent = '☀️';
@@ -1406,6 +1408,20 @@
     function updateKpiCards(cur, calc) {
       // 1. Banjarasri
       document.getElementById('val-banjarasri').textContent = `${calc.banjarasri.toFixed(1)}°C`;
+      const feelsEl = document.getElementById('feels-banjarasri');
+      if (feelsEl) {
+        const feels = (cur.apparent_temperature === null || cur.apparent_temperature === undefined)
+          ? null : Number(cur.apparent_temperature);
+        if (feels === null) {
+          feelsEl.textContent = 'Terasa: tidak tersedia';
+          feelsEl.className = 'mb-1 text-[11px] font-semibold text-slate-400';
+        } else {
+          feelsEl.textContent = `Terasa ${feels.toFixed(1)}°C`;
+          feelsEl.className = feels >= 35
+            ? 'mb-1 text-[11px] font-bold text-rose-600'
+            : 'mb-1 text-[11px] font-semibold text-orange-600';
+        }
+      }
       document.getElementById('sub-banjarasri').textContent = `RH ${cur.relative_humidity_2m}%`;
       const badgeBjr = document.getElementById('badge-banjarasri');
       badgeBjr.textContent = cur.is_day === 1 ? 'Siang' : 'Malam';
@@ -1727,6 +1743,8 @@
         kolam: Number(calc.kolam.toFixed(1)),
         ubi: Number(calc.ubi.toFixed(1)),
         banjarasri: Number(calc.banjarasri.toFixed(1)),
+        feels: (cur.apparent_temperature === null || cur.apparent_temperature === undefined)
+          ? null : Number(cur.apparent_temperature),
         rh: Number(cur.relative_humidity_2m),
         wind: Number(cur.wind_speed_10m),
         cloud: Number(cur.cloud_cover),
