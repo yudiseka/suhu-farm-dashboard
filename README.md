@@ -1,69 +1,72 @@
 # Suhu Farm Dashboard + API
 
-Dashboard mikroiklim Rencang Farm (Banjarasri, Tanggulangin, Sidoarjo) dengan API state
-tugas. Produksi: <https://dashboard-rho-five-48.vercel.app> — deploy otomatis dari
+Dashboard mikroiklim Rencang Farm (Banjarasri, Tanggulangin, Sidoarjo).
+Produksi: <https://dashboard-rho-five-48.vercel.app> — deploy otomatis dari
 branch `main` repo ini.
 
 ## Struktur
 
 ```
 index.html            dashboard (baca state dari /api/state, cache localStorage)
-suhu_farm.html        halaman suhu ringkas
 api/state.js          serverless function: GET state, POST perubahan (butuh x-api-key)
+api/bmkg.js           proxy server-side BMKG (CORS): prakiraan 3 hari & peringatan dini
 lib/store.js          baca/tulis data/state.json di repo via GitHub Contents API
-data/state.json       SATU-SATUNYA sumber kebenaran tugas, offset kalibrasi, riwayat
+data/state.json       sumber kebenaran: offset kalibrasi, alertRules, riwayat
+lib/alert-rules.js    evaluator aturan peringatan di browser
 scripts/dev-server.js server lokal untuk tes tanpa Vercel
 vercel.json           lewati build kalau commit hanya mengubah data/state.json
 ```
+
+## Fitur yang aktif
+
+- **Monitoring 4 zona**: Banjarasri (makro), Kandang Ayam, Kolam Ikan, Lahan Ubi Jalar.
+- **Prakiraan BMKG 3 hari** — suhu, curah hujan, kelembapan, angin per periode 3 jam;
+  tarik tiap 3 jam lewat `/api/bmkg?kind=forecast`; kode adm4 `35.15.06.2008`.
+- **Peringatan dini BMKG** — status kecamatan Tanggulangin; tarik tiap 2 jam lewat
+  `/api/bmkg?kind=nowcast`.
+- **Kalender Siraman & Pupuk** — jadwal 3 hari untuk ubi & kolam, dihitung dari
+  prakiraan hujan BMKG. Hujan > 0 mm → tunda siram/pupuk ubi, kurangi pelet ikan.
+  Tanpa sensor.
+- **Peringatan otomatis** — aturan dari `data/state.json`, bisa diubah tanpa deploy UI.
+
+Fitur "Tugas Farm" (task harian/kondisional) **sudah dihapus** dari UI dan tidak
+lagi dipakai. Fitur harga komoditas tidak diimplementasikan.
 
 ## API
 
 `GET /api/state` — publik, tanpa auth.
 
 ```json
-{ "ok": true, "state": { "version": 1, "updatedAt": "...", "offsets": {...}, "tasks": [...], "history": [...] } }
+{ "ok": true, "state": { "version": 1, "updatedAt": "...", "offsets": {...}, "alertRules": {...}, "history": [...] } }
 ```
 
-`POST /api/state` — header `x-api-key: <FARM_API_KEY>`, body JSON dengan `action`:
+`POST /api/state` — header `x-api-key: *** body JSON dengan `action`:
 
 | action | body tambahan |
 |---|---|
-| `task.add` | `task: {title, zone, type, detail, priority, notes, triggerRule, schedule}` |
-| `task.update` | `id`, `patch: {...}` |
-| `task.toggle` | `id` |
-| `task.delete` | `id` |
-| `tasks.replace` | `tasks: [...]` (dipakai dashboard saat simpan) |
-| `tasks.reset_routine` | — |
 | `offsets.update` | `offsets: {kandangRoof, kolamBase, ubiSolar}` |
+| `alerts.rules_set` | `rules: {...}` |
+| `alerts.rule_update` | `id`, `patch: {enabled,title,desc,tone}` |
+| `alerts.rules_reset` | — |
 
-Nilai valid: `zone` = `Kandang Ayam | Kolam Ikan | Lahan Ubi Jalar | Umum`;
-`type` = `rutin | kondisional | sekali`; `priority` = `Tinggi | Sedang | Rendah`;
-`triggerRule` = `manual | kandang_hot | kolam_warm | kolam_cold | ubi_hot_dry | ubi_hot_dry_no_rain | cloudy_rain | hujan | high_wind`;
-`schedule` = `{kind: "daily"|"weekly"|"once"|"conditional", times: ["HH:MM"], days: [0..6]}`,
-`days` memakai 0 = Minggu (sama dengan JavaScript).
+`GET /api/bmkg?kind=forecast|nowcast` — proxy publik, tanpa auth.
 
 ## Deteksi Hujan (real-time)
 
 Dashboard menarik `current.precipitation`, `current.rain`, `current.showers` dan
-`current.weather_code` dari Open-Meteo. Sebelumnya parameter ini **tidak diminta**,
-makanya hujan tidak pernah dilaporkan walau awan 98%.
+`current.weather_code` dari Open-Meteo.
 
 - Indikator hujan ada di kartu **Cuaca & Angin Lokal** (baris "Hujan: ...").
 - Aturan hujan: `precipitation > 0 mm/jam` **atau** `weather_code >= 51` → hujan.
-- Kode WMO 0–3 = tidak hujan (termasuk mendung/awan tebal); 51+ = gerimis/hujan; 95+ = badai.
-- Alert otomatis ke-4 di panel "Peringatan & Rekomendasi" melaporkan status hujan.
-- Tugas kondisional baru: `triggerRule: "hujan"` — aktif saat hujan terdeteksi.
-- Refresh cuaca tiap **15 menit** (Open-Meteo `current` update tiap 15 menit).
+- Kode WMO 0–3 = tidak hujan; 51+ = gerimis/hujan; 95+ = badai.
+- Refresh cuaca tiap **15 menit**.
 - Mode offline: curah hujan ditandai `null` → tampil "tidak diketahui", **tidak mengarang angka**.
 
 ## Aturan Peringatan & Rekomendasi (backend)
 
 Aturan disimpan di `data/state.json` → `alertRules` dan dilayani lewat
 `GET /api/state`. Browser mengevaluasinya dengan `lib/alert-rules.js`.
-Mengubah aturan **tidak perlu deploy ulang UI** — cukup edit file tersebut atau
-POST ke `/api/state`.
 
-Bentuk aturan:
 ```json
 {
   "id": "kandang_panas", "zone": "Kandang Ayam", "order": 10,
@@ -73,20 +76,12 @@ Bentuk aturan:
   "desc": "Radiasi atap fiber tinggi. Pastikan sirkulasi depan-belakang tidak terhalang."
 }
 ```
+
 - `when` bisa `all` (AND), `any` (OR), atau kondisi tunggal.
 - `op`: `>= <= > < == != between is_null is_not_null`.
 - `metric`: `kandang kolam ubi banjarasri rh wind cloud precip weatherCode
   rainPast3 rainNext3 hujanAktif weatherLabel hour`.
 - `tone`: `ok info warning danger rain`. Template `{namaMetric}` diisi otomatis.
-
-Contoh tambah aturan lewat API (butuh `x-api-key`):
-```bash
-curl -X POST https://dashboard-rho-five-48.vercel.app/api/state \
-  -H 'Content-Type: application/json' -H 'x-api-key: <FARM_API_KEY>' \
-  -d '{"action":"alerts.rules_set","rules":{...}}'
-```
-Aksi lain: `alerts.rule_update` (`id`, `patch:{enabled,title,desc,tone}`),
-`alerts.rules_reset`. Default 11 aturan mencakup kandang, kolam, ubi, dan hujan.
 
 ## Environment Vercel
 
@@ -103,10 +98,5 @@ Tanpa `FARM_API_KEY`, GET tetap jalan dan semua POST ditolak (503).
 ```bash
 LOCAL_STATE=1 FARM_API_KEY=tes123 node scripts/dev-server.js 8787
 curl -s localhost:8787/api/state | head -c 300
+curl -s localhost:8787/api/bmkg?kind=forecast | head -c 300
 ```
-
-## Klien dari Hermes
-
-`farm_api.py` (di workspace, tidak di repo ini) membaca state langsung dari raw GitHub
-tanpa token, dan menulis lewat GitHub Contents API kalau ada token di
-`~/.hermes/secrets/github_farm_token`.
