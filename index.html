@@ -151,14 +151,11 @@
             <span>Lahan Ubi Jalar</span>
           </button>
 
-          <button onclick="switchMainView('tasks', this)" id="navTasksBtn" class="nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
-            <span class="flex items-center gap-3">
-              <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-              <span>Tugas Farm</span>
-            </span>
-            <span id="sidebarTaskBadge" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-800">0</span>
+          <button onclick="switchMainView('calendar', this)" id="navCalendarBtn" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
+            <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>Kalender Siraman & Pupuk</span>
           </button>
 
           <button onclick="openCalibrationModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
@@ -230,13 +227,6 @@
             </svg>
             <span class="hidden sm:inline">Kalibrasi</span>
           </button>
-        </div>
-
-        <!-- Status sambungan data: server vs lokal -->
-        <div id="syncStatusBar" class="hidden flex flex-wrap items-center gap-2 text-xs font-semibold rounded-2xl px-4 py-2.5 border">
-          <span id="syncStatusDot" class="w-2 h-2 rounded-full"></span>
-          <span id="syncStatusText">-</span>
-          <button id="syncStatusAction" onclick="connectServer()" class="ml-auto underline decoration-dotted underline-offset-2 hover:opacity-80 cursor-pointer hidden">Pasang kunci API</button>
         </div>
 
       <!-- 5 KPI Summary Cards Row -->
@@ -531,256 +521,74 @@
         </div>
       </section>
 
-      <!-- Dashboard Summary Widget: Tugas Hari Ini & Peringatan Kondisi -->
-      <section class="pb-6">
-        <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-white">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="text-base sm:text-lg font-bold text-slate-900">Tugas Hari Ini & Pemicu Kondisi Real-Time</h3>
-                <span id="dashTriggeredBadge" class="hidden px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 animate-pulse">0 Terpicu Cuaca</span>
-              </div>
-              <p class="text-xs text-slate-500">Daftar tugas aktif termasuk tugas kondisional yang otomatis aktif saat ambang suhu/cuaca terpenuhi</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <button onclick="openTaskModal()" class="px-3.5 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
-                <span>+ Tambah Tugas</span>
-              </button>
-              <button onclick="switchMainView('tasks', document.getElementById('navTasksBtn'))" class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition cursor-pointer">
-                Kelola Semua Tugas →
-              </button>
-            </div>
-          </div>
-          <div id="dashboardTaskSummaryList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            <!-- Populated dynamically by JS -->
-          </div>
-        </div>
-      </section>
       </div> <!-- End of dashboardView -->
 
-      <!-- VIEW 2: MANAJEMEN TUGAS FARM -->
-      <div id="tasksView" class="hidden space-y-6 pb-8">
-        <!-- Tasks Header -->
+      <!-- VIEW 2: KALENDER SIRAMAN & PUPUK (dari prakiraan hujan BMKG) -->
+      <div id="calendarView" class="hidden space-y-6 pb-8">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div class="flex items-center gap-2.5 flex-wrap">
-              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">MANAJEMEN TUGAS FARM</h2>
-              <span id="tasksTriggeredHeaderPill" class="px-3 py-1 rounded-full text-xs font-semibold bg-teal-100 text-teal-800 border border-teal-200">
-                Terhubung Sensor Mikro
-              </span>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">KALENDER SIRAMAN & PUPUK</h2>
+              <span id="calStatusPill" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">Memuat data BMKG...</span>
             </div>
             <p class="text-xs sm:text-sm text-slate-600 mt-1">
-              Kelola jadwal rutin harian/mingguan, tugas kondisional berbasis suhu/cuaca Banjarasri, dan pekerjaan insidental.
+              Jadwal 3 hari ke depan untuk Lahan Ubi Jalar &amp; Kolam Ikan, dihitung otomatis dari prakiraan hujan BMKG Banjarasri. Tanpa sensor.
             </p>
           </div>
-
-          <div class="flex flex-wrap items-center gap-2.5">
-            <button onclick="resetRoutineTasks()" class="bg-white hover:bg-amber-50 text-amber-800 border border-amber-200 px-3.5 py-2.5 rounded-2xl shadow-card text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer" title="Kembalikan status tugas rutin yang sudah selesai untuk siklus baru">
-              <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span>Reset Siklus Rutin</span>
-            </button>
-
-            <button onclick="openTaskModal()" class="bg-teal-600 hover:bg-teal-700 active:scale-[0.98] text-white px-4 py-2.5 rounded-2xl shadow-md shadow-teal-600/20 text-xs sm:text-sm font-bold flex items-center gap-2 transition cursor-pointer">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              <span>Tambah Tugas Baru</span>
-            </button>
-          </div>
+          <button onclick="fetchBmkgAll(true)" class="bg-teal-600 hover:bg-teal-700 active:scale-[0.98] text-white px-4 py-2.5 rounded-2xl shadow-md shadow-teal-600/20 text-xs sm:text-sm font-bold flex items-center gap-2 transition cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Perbarui Prakiraan</span>
+          </button>
         </div>
 
-        <!-- Task KPI Summary Row -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Ringkasan aksi -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="bg-white rounded-2xl p-4 shadow-card border border-white">
-            <span class="text-xs font-semibold text-slate-500">Total Tugas Aktif</span>
+            <span class="text-xs font-semibold text-slate-500">Hari Tanpa Hujan</span>
             <div class="mt-1.5 flex items-baseline justify-between">
-              <span id="statTasksActive" class="text-2xl sm:text-3xl font-extrabold text-slate-900">0</span>
-              <span class="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full">Belum Selesai</span>
+              <span id="calDryDays" class="text-2xl sm:text-3xl font-extrabold text-slate-900">–</span>
+              <span class="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full">Siram &amp; pupuk</span>
             </div>
           </div>
-
           <div class="bg-white rounded-2xl p-4 shadow-card border border-white">
-            <span class="text-xs font-semibold text-slate-500">Terpicu Cuaca / Suhu</span>
+            <span class="text-xs font-semibold text-slate-500">Hari Hujan</span>
             <div class="mt-1.5 flex items-baseline justify-between">
-              <span id="statTasksTriggered" class="text-2xl sm:text-3xl font-extrabold text-rose-600">0</span>
-              <span class="text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full">Kondisional Aktif</span>
+              <span id="calWetDays" class="text-2xl sm:text-3xl font-extrabold text-blue-600">–</span>
+              <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">Tunda siram</span>
             </div>
           </div>
-
           <div class="bg-white rounded-2xl p-4 shadow-card border border-white">
-            <span class="text-xs font-semibold text-slate-500">Tugas Rutin</span>
+            <span class="text-xs font-semibold text-slate-500">Total Prakiraan Hujan</span>
             <div class="mt-1.5 flex items-baseline justify-between">
-              <span id="statTasksRoutine" class="text-2xl sm:text-3xl font-extrabold text-sky-700">0</span>
-              <span class="text-[11px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full">Terjadwal</span>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-2xl p-4 shadow-card border border-white">
-            <span class="text-xs font-semibold text-slate-500">Tugas Selesai</span>
-            <div class="mt-1.5 flex items-baseline justify-between">
-              <span id="statTasksCompleted" class="text-2xl sm:text-3xl font-extrabold text-emerald-600">0</span>
-              <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Tuntas</span>
+              <span id="calTotalRain" class="text-2xl sm:text-3xl font-extrabold text-slate-900">–</span>
+              <span class="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">mm / 3 hari</span>
             </div>
           </div>
         </div>
 
-        <!-- Filter & Search Bar -->
-        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-card border border-white space-y-3.5">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
-            <!-- Search Input -->
-            <div class="lg:col-span-4 relative">
-              <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input type="text" id="taskSearchInput" oninput="renderTasksView()" placeholder="Cari judul tugas, jadwal, atau catatan..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500" />
-            </div>
-
-            <!-- Type Filter -->
-            <div class="lg:col-span-3">
-              <select id="taskTypeFilter" onchange="renderTasksView()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
-                <option value="all">Semua Tipe Tugas</option>
-                <option value="rutin">🔄 Tugas Rutin</option>
-                <option value="kondisional">⚡ Tugas Kondisional</option>
-                <option value="sekali">📌 Sekali Jalan / Insidental</option>
-              </select>
-            </div>
-
-            <!-- Zone Filter -->
-            <div class="lg:col-span-3">
-              <select id="taskZoneFilter" onchange="renderTasksView()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
-                <option value="all">Semua Zona Farm</option>
-                <option value="Kandang Ayam">🐔 Kandang Ayam</option>
-                <option value="Kolam Ikan">🐟 Kolam Ikan</option>
-                <option value="Lahan Ubi Jalar">🍠 Lahan Ubi Jalar</option>
-                <option value="Kompos/Cacing">🪱 Kompos / Cacing</option>
-                <option value="Umum">🏡 Umum</option>
-              </select>
-            </div>
-
-            <!-- Status Filter -->
-            <div class="lg:col-span-2">
-              <select id="taskStatusFilter" onchange="renderTasksView()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
-                <option value="all">Semua Status</option>
-                <option value="active">Belum Selesai</option>
-                <option value="completed">Sudah Selesai</option>
-              </select>
-            </div>
-          </div>
+        <!-- Grid kalender 3 hari -->
+        <div id="calGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="text-xs text-slate-500">Memuat kalender dari prakiraan BMKG...</div>
         </div>
 
-        <!-- Tasks List Container -->
-        <div id="tasksListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Populated dynamically by JS -->
+        <!-- Catatan aturan -->
+        <div class="bg-white rounded-2xl p-5 shadow-card border border-white">
+          <h4 class="font-bold text-slate-900 text-sm mb-2">Aturan kalender (dapat diverifikasi lapangan)</h4>
+          <ul class="text-xs text-slate-600 space-y-1.5 leading-relaxed">
+            <li>• <strong>Hujan &gt; 0 mm</strong> pada hari itu → <strong>tunda penyiraman &amp; pemupukan ubi</strong>; kurangi pakan ikan &amp; cek drainase kolam.</li>
+            <li>• <strong>Tanpa hujan (0 mm)</strong> → siram bedengan ubi sore hari (16.00–17.00 WIB); pupuk setelah siram.</li>
+            <li>• <strong>Suhu &gt; 33°C</strong> → naungi kolam, cek aerasi &amp; air minum ayam.</li>
+            <li>• Prakiraan berubah tiap 3 jam. Kalender ini <strong>bukan janji hasil panen</strong>, hanya penanda jadwal kerja lapangan.</li>
+          </ul>
         </div>
-      </div> <!-- End of tasksView -->
+      </div> <!-- End of calendarView -->
 
     </main>
   </div>
 
-  <!-- Add / Edit Task Modal -->
-  <div id="taskModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-teal-100 max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div>
-          <h3 id="taskModalTitle" class="text-lg font-extrabold text-slate-900">Tambah Tugas Farm</h3>
-          <p class="text-xs text-slate-500">Atur tugas rutin, pemicu suhu/cuaca kondisional, atau tugas sekali jalan</p>
-        </div>
-        <button onclick="closeTaskModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
 
-      <form id="taskForm" onsubmit="saveTaskForm(event)" class="mt-4 space-y-4">
-        <input type="hidden" id="taskIdInput" value="" />
-
-        <!-- Judul Tugas -->
-        <div>
-          <label for="taskTitleInput" class="block text-xs font-bold text-slate-700 mb-1">Judul Tugas *</label>
-          <input type="text" id="taskTitleInput" required placeholder="Contoh: Beri pakan ayam & cek air minum" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500" />
-        </div>
-
-        <!-- Zona & Prioritas -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label for="taskZoneInput" class="block text-xs font-bold text-slate-700 mb-1">Zona Terkait</label>
-            <select id="taskZoneInput" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500">
-              <option value="Kandang Ayam">Kandang Ayam</option>
-              <option value="Kolam Ikan">Kolam Ikan</option>
-              <option value="Lahan Ubi Jalar">Lahan Ubi Jalar</option>
-              <option value="Kompos/Cacing">Kompos/Cacing</option>
-              <option value="Umum">Umum</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="taskPriorityInput" class="block text-xs font-bold text-slate-700 mb-1">Prioritas</label>
-            <select id="taskPriorityInput" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500">
-              <option value="Tinggi">🔴 Tinggi</option>
-              <option value="Sedang" selected>🟡 Sedang</option>
-              <option value="Rendah">🟢 Rendah</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Tipe Tugas -->
-        <div>
-          <label for="taskTypeInput" class="block text-xs font-bold text-slate-700 mb-1">Tipe Tugas</label>
-          <select id="taskTypeInput" onchange="toggleTaskTypeFields()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500">
-            <option value="rutin">🔄 Rutin (Harian / Mingguan / Bulanan)</option>
-            <option value="kondisional">⚡ Kondisional (Dipicu Suhu / Cuaca / Kondisi)</option>
-            <option value="sekali">📌 Sekali Jalan / Insidental</option>
-          </select>
-        </div>
-
-        <!-- Opsi Khusus Kondisional: Rule Pemicu Otomatis -->
-        <div id="conditionalRuleGroup" class="hidden bg-amber-50/70 border border-amber-200 rounded-2xl p-3.5 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <label for="taskTriggerRuleInput" class="text-xs font-bold text-amber-950">Pemicu Otomatis Sensor Real-Time (Opsional)</label>
-            <span class="text-[10px] font-semibold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full">Auto-Detect</span>
-          </div>
-          <select id="taskTriggerRuleInput" onchange="applyPresetConditionLabel()" class="w-full px-3 py-2 rounded-xl bg-white border border-amber-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500">
-            <option value="manual">-- Syarat Kondisi Manual (Tanpa Pemicu Angka) --</option>
-            <option value="kandang_hot">Jika Suhu Kandang Ayam ≥ 34.5°C</option>
-            <option value="kolam_warm">Jika Suhu Air Kolam Ikan ≥ 31.0°C</option>
-            <option value="kolam_cold">Jika Suhu Air Kolam Ikan ≤ 26.0°C</option>
-            <option value="ubi_hot_dry">Jika Suhu Ubi Jalar ≥ 34.0°C & RH &lt; 65%</option>
-            <option value="ubi_hot_dry_no_rain">Jika Suhu Ubi Jalar ≥ 34.0°C, RH &lt; 65% &amp; Peluang Hujan &lt; 60%</option>
-            <option value="cloudy_rain">Jika Tutupan Awan Tebal (≥ 80% / Potensi Hujan)</option>
-            <option value="hujan">Jika Hujan Terdeteksi (Curah Hujan &gt; 0 mm/jam)</option>
-            <option value="high_wind">Jika Kecepatan Angin Kencang (≥ 18 km/j)</option>
-          </select>
-          <p class="text-[11px] text-amber-900/80 leading-relaxed">
-            Jika kondisi di atas terpenuhi oleh pembacaan sensor Banjarasri saat ini, tugas akan otomatis menyala dengan badge <strong>TERPICU SEKARANG</strong>.
-          </p>
-        </div>
-
-        <!-- Detail Jadwal atau Syarat Kondisi -->
-        <div>
-          <label for="taskDetailInput" id="taskDetailLabel" class="block text-xs font-bold text-slate-700 mb-1">Detail Jadwal Rutin *</label>
-          <input type="text" id="taskDetailInput" required placeholder="Contoh: Setiap Pagi 07:00 & Sore 16:00" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500" />
-        </div>
-
-        <!-- Catatan Opsional -->
-        <div>
-          <label for="taskNotesInput" class="block text-xs font-bold text-slate-700 mb-1">Catatan Tambahan (Opsional)</label>
-          <textarea id="taskNotesInput" rows="2" placeholder="Takaran pakan, dosis probiotik, atau instruksi khusus..." class="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500"></textarea>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-          <button type="button" onclick="closeTaskModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
-            Batal
-          </button>
-          <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 shadow-sm transition cursor-pointer">
-            Simpan Tugas
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- Calibration & Formula Explanation Modal -->
   <div id="calibrationModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
@@ -891,106 +699,12 @@
 
     let offsets = loadOffsets();
     let weatherPayload = null;
-    let latestEnvSnapshot = null; // Menyimpan pembacaan suhu/cuaca terbaru untuk evaluasi tugas kondisional
+    let latestEnvSnapshot = null; // Pembacaan cuaca terbaru untuk konteks peringatan otomatis
     let backendAlertRules = null;   // Ruleset peringatan dari /api/state (data/state.json)
     let trendChartInstance = null;
     let barChartInstance = null;
     let currentTrendFilter = 'all';
     let currentMainView = 'dashboard';
-
-    // =========================================================================
-    // 2. MANAJEMEN TUGAS FARM (RUTIN, KONDISIONAL, SEKALI JALAN) + LOCALSTORAGE
-    // =========================================================================
-    const TASKS_STORAGE_KEY = 'rencang_farm_tasks_v1';
-
-    const DEFAULT_TASKS = [
-      {
-        id: 'task-1',
-        title: 'Beri pakan ayam pagi & ganti air minum',
-        zone: 'Kandang Ayam',
-        type: 'rutin',
-        detail: 'Harian • Setiap Pagi 07:00 WIB',
-        triggerRule: 'manual',
-        priority: 'Tinggi',
-        notes: 'Pastikan wadah minum bersih dan tambahkan vitamin/elektrolit jika cuaca terik.',
-        completed: false,
-        createdAt: Date.now() - 86400000
-      },
-      {
-        id: 'task-2',
-        title: 'Pemberian pelet ikan & cek aerator kolam terpal',
-        zone: 'Kolam Ikan',
-        type: 'rutin',
-        detail: 'Harian • Pukul 08:30 & 16:30 WIB',
-        triggerRule: 'manual',
-        priority: 'Tinggi',
-        notes: 'Amati nafsu makan ikan di kolam Ø1m; jangan beri pakan berlebih saat mendung.',
-        completed: false,
-        createdAt: Date.now() - 82000000
-      },
-      {
-        id: 'task-3',
-        title: 'Semprot kabut air atap fiber & cek aliran angin',
-        zone: 'Kandang Ayam',
-        type: 'kondisional',
-        detail: 'Jika Suhu Kandang Ayam ≥ 34.5°C',
-        triggerRule: 'kandang_hot',
-        priority: 'Tinggi',
-        notes: 'Kurangi stres panas (heat stress) pada ayam akibat radiasi atap fiber siang hari.',
-        completed: false,
-        createdAt: Date.now() - 75000000
-      },
-      {
-        id: 'task-4',
-        title: 'Kencangkan aerasi & kurangi porsi pakan ikan',
-        zone: 'Kolam Ikan',
-        type: 'kondisional',
-        detail: 'Jika Suhu Air Kolam Ikan ≥ 31.0°C',
-        triggerRule: 'kolam_warm',
-        priority: 'Sedang',
-        notes: 'Suhu air hangat menurunkan kadar oksigen terlarut pada kolam terpal 628 liter.',
-        completed: false,
-        createdAt: Date.now() - 70000000
-      },
-      {
-        id: 'task-5',
-        title: 'Siram bedengan ubi jalar sore hari',
-        zone: 'Lahan Ubi Jalar',
-        type: 'kondisional',
-        detail: 'Jika Suhu Ubi Jalar ≥ 34.0°C & RH < 65%',
-        triggerRule: 'ubi_hot_dry',
-        priority: 'Sedang',
-        notes: 'Lahan pekarangan tanpa teduhan cepat kehilangan kelembapan permukaan saat terik.',
-        completed: false,
-        createdAt: Date.now() - 65000000
-      },
-      {
-        id: 'task-6',
-        title: 'Siphon dasar kolam & aplikasi probiotik air',
-        zone: 'Kolam Ikan',
-        type: 'rutin',
-        detail: 'Mingguan • Setiap Minggu Pagi',
-        triggerRule: 'manual',
-        priority: 'Sedang',
-        notes: 'Buang endapan kotoran dasar 15–20% volume air lalu isi ulang air endapan.',
-        completed: false,
-        createdAt: Date.now() - 50000000
-      },
-      {
-        id: 'task-7',
-        title: 'Kalibrasi manual suhu air kolam & kandang dengan termometer',
-        zone: 'Umum',
-        type: 'sekali',
-        detail: 'Sekali Jalan • Pukul 14:00 WIB saat terik',
-        triggerRule: 'manual',
-        priority: 'Rendah',
-        notes: 'Cocokkan pembacaan termometer fisik dengan angka estimasi dashboard lalu sesuaikan slider Kalibrasi.',
-        completed: false,
-        createdAt: Date.now() - 36000000
-      }
-    ];
-
-    let farmTasks = loadTasks();
 
     // =========================================================================
     // 2b. SINKRONISASI STATE DENGAN API (/api/state)
@@ -1048,18 +762,6 @@
         const json = await res.json();
         const state = (json && json.state) || {};
 
-        if (Array.isArray(state.tasks)) {
-          if (isLocalDirty()) {
-            // Ada perubahan lokal yang belum tersimpan ke server: jangan timpa.
-            if (getApiKey()) await pushTasksToApi(null);
-            else updateSyncStatusUI('local');
-          } else {
-            farmTasks = state.tasks;
-            try { localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(farmTasks)); } catch (e) { /* ignore */ }
-            refreshTaskUI();
-          }
-        }
-
         if (state.offsets) {
           offsets = { ...DEFAULT_OFFSETS, ...state.offsets };
           try { localStorage.setItem('rencang_farm_offsets', JSON.stringify(offsets)); } catch (e) { /* ignore */ }
@@ -1075,597 +777,10 @@
         stateSync.online = true;
         stateSync.lastSync = state.updatedAt ? new Date(state.updatedAt) : new Date();
         stateSync.dirty = false;
-        updateSyncStatusUI(isLocalDirty() ? 'local' : 'server');
       } catch (e) {
         stateSync.online = false;
-        updateSyncStatusUI(getApiKey() ? 'error' : 'local', e.message);
         console.warn('API state tidak tersedia, memakai cache lokal:', e.message);
       }
-    }
-
-    function loadTasks() {
-      try {
-        const saved = localStorage.getItem(TASKS_STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) return parsed;
-        }
-      } catch (e) {
-        console.warn('Gagal memuat tugas dari localStorage:', e);
-      }
-      return [...DEFAULT_TASKS];
-    }
-
-    const TASKS_DIRTY_KEY = 'rencang_farm_tasks_dirty';
-
-    function markLocalDirty(on) {
-      try {
-        if (on) localStorage.setItem(TASKS_DIRTY_KEY, '1');
-        else localStorage.removeItem(TASKS_DIRTY_KEY);
-      } catch (e) { /* ignore */ }
-    }
-
-    function isLocalDirty() {
-      try { return localStorage.getItem(TASKS_DIRTY_KEY) === '1'; } catch (e) { return false; }
-    }
-
-    function persistTasks(action) {
-      try {
-        localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(farmTasks));
-      } catch (e) {
-        console.warn('Gagal menyimpan tugas ke localStorage:', e);
-      }
-      markLocalDirty(true);
-      refreshTaskUI();
-      pushTasksToApi(action);
-    }
-
-    let apiKeyPromptShown = false;
-
-    // action: payload API spesifik (task.toggle / task.delete / task.add / task.update).
-    // Tanpa action, seluruh daftar dikirim (dipakai hanya untuk retry saat offline).
-    async function pushTasksToApi(action) {
-      let key = getApiKey();
-      if (!key && !apiKeyPromptShown) {
-        apiKeyPromptShown = true;
-        key = ensureApiKey();
-      }
-      if (!key) {
-        updateSyncStatusUI('local');
-        showToast('Belum tersambung: perubahan hanya tersimpan di browser ini.');
-        return;
-      }
-      stateSync.dirty = true;
-      try {
-        const payload = action || { action: 'tasks.replace', tasks: farmTasks };
-        const result = await queueApi(payload);
-        if (result.ok) {
-          markLocalDirty(false);
-          stateSync.online = true;
-          stateSync.dirty = false;
-          stateSync.lastSync = new Date();
-          updateSyncStatusUI('server');
-          showToast('Tugas tersimpan ke server.');
-        } else if (result.reason === 'bad-key') {
-          setApiKey('');
-          updateSyncStatusUI('local');
-          showToast('Kunci API ditolak. Klik "Pasang kunci API" untuk mengganti.');
-        } else if (result.reason === 'no-key') {
-          updateSyncStatusUI('local');
-          showToast('Tersimpan di browser ini saja.');
-        } else {
-          updateSyncStatusUI('error', result.reason);
-          showToast('Gagal simpan ke server: ' + result.reason);
-        }
-      } catch (e) {
-        updateSyncStatusUI('error', e.message);
-        showToast('Server tidak terjangkau, perubahan tersimpan di browser ini.');
-      }
-    }
-
-    function updateSyncStatusUI(mode, detail) {
-      const bar = document.getElementById('syncStatusBar');
-      const dot = document.getElementById('syncStatusDot');
-      const label = document.getElementById('syncStatusText');
-      const action = document.getElementById('syncStatusAction');
-      if (!bar || !dot || !label || !action) return;
-      const state = mode || (getApiKey() ? (stateSync.online ? 'server' : 'checking') : 'local');
-      bar.classList.remove('hidden');
-      const styles = {
-        server: ['bg-emerald-50 border-emerald-200 text-emerald-800', 'bg-emerald-500', 'Tersambung ke server — tugas tersimpan permanen.'],
-        local: ['bg-amber-50 border-amber-300 text-amber-900', 'bg-amber-500', 'Belum tersambung — perubahan hanya tersimpan di browser ini dan akan hilang saat refresh.'],
-        checking: ['bg-slate-50 border-slate-200 text-slate-600', 'bg-slate-400', 'Menyambung ke server...'],
-        error: ['bg-rose-50 border-rose-300 text-rose-800', 'bg-rose-500', 'Gagal menyimpan ke server' + (detail ? ': ' + detail : '.')]
-      };
-      const [barCls, dotCls, text] = styles[state] || styles.checking;
-      if (state === 'server') {
-        // Saat tersambung normal, jangan tampilkan bar apa pun.
-        bar.className = 'hidden';
-        return;
-      }
-      bar.className = 'flex flex-wrap items-center gap-2 text-xs font-semibold rounded-2xl px-4 py-2.5 border ' + barCls;
-      dot.className = 'w-2 h-2 rounded-full ' + dotCls;
-      label.textContent = text;
-      action.classList.remove('hidden');
-    }
-
-    async function connectServer() {
-      const key = (window.prompt('Tempel kunci API dashboard:', getApiKey()) || '').trim();
-      if (!key) return;
-      setApiKey(key);
-      await pushTasksToApi();
-      if (stateSync.online) await syncStateFromApi();
-    }
-
-    // Link koneksi (?claim=...) dari pemilik farm: simpan kunci sekali, lalu
-    // buang parameternya dari address bar supaya tidak ikut tersimpan.
-    async function handleClaimLink() {
-      let url;
-      try { url = new URL(window.location.href); } catch (e) { return false; }
-      const claim = url.searchParams.get('claim');
-      if (!claim) return false;
-      try {
-        const res = await fetch('/api/state?claim=' + encodeURIComponent(claim), { cache: 'no-store' });
-        const json = await res.json().catch(() => ({}));
-        if (json && json.key) {
-          setApiKey(json.key);
-          url.searchParams.delete('claim');
-          window.history.replaceState({}, '', url.pathname + (url.search || '') + url.hash);
-          showToast('Dashboard tersambung ke server.');
-          return true;
-        }
-        showToast('Link koneksi sudah kedaluwarsa. Minta link baru.');
-      } catch (e) {
-        showToast('Gagal membuka link koneksi: ' + e.message);
-      }
-      return false;
-    }
-
-    async function pushOffsetsToApi() {
-      if (!getApiKey()) return;
-      try {
-        await apiPost({ action: 'offsets.update', offsets });
-      } catch (e) {
-        console.warn('Gagal simpan kalibrasi ke server:', e.message);
-      }
-    }
-
-    /**
-     * Mengevaluasi apakah tugas kondisional sedang terpicu oleh pembacaan cuaca/suhu Banjarasri saat ini
-     */
-    function evaluateConditionalTrigger(task) {
-      if (task.type !== 'kondisional' || !latestEnvSnapshot) {
-        return { triggered: false, reason: '' };
-      }
-      const { cur, calc } = latestEnvSnapshot;
-      switch (task.triggerRule) {
-        case 'kandang_hot':
-          return {
-            triggered: calc.kandang >= 34.5,
-            reason: `Suhu kandang saat ini ${calc.kandang.toFixed(1)}°C (≥ 34.5°C)`
-          };
-        case 'kolam_warm':
-          return {
-            triggered: calc.kolam >= 31.0,
-            reason: `Suhu kolam saat ini ${calc.kolam.toFixed(1)}°C (≥ 31.0°C)`
-          };
-        case 'kolam_cold':
-          return {
-            triggered: calc.kolam <= 26.0,
-            reason: `Suhu kolam saat ini ${calc.kolam.toFixed(1)}°C (≤ 26.0°C)`
-          };
-        case 'ubi_hot_dry':
-          return {
-            triggered: calc.ubi >= 34.0 && cur.relative_humidity_2m < 65,
-            reason: `Suhu ubi ${calc.ubi.toFixed(1)}°C & RH ${cur.relative_humidity_2m}%`
-          };
-        case 'ubi_hot_dry_no_rain': {
-          const rain = latestEnvSnapshot.rainNext3;
-          const kering = calc.ubi >= 34.0 && cur.relative_humidity_2m < 65;
-          const takHujan = rain === null || rain === undefined || rain < 60;
-          return {
-            triggered: kering && takHujan,
-            reason: `Suhu ubi ${calc.ubi.toFixed(1)}°C & RH ${cur.relative_humidity_2m}% • peluang hujan 3 jam ${rain === null || rain === undefined ? 'n/a' : rain + '%'}`
-          };
-        }
-        case 'cloudy_rain':
-          return {
-            triggered: cur.cloud_cover >= 80,
-            reason: `Tutupan awan ${cur.cloud_cover}% (mendung tebal)`
-          };
-        case 'hujan': {
-          const mm = cur.precipitation;
-          if (mm === null || mm === undefined) {
-            return { triggered: false, reason: 'Data hujan tidak tersedia (offline)' };
-          }
-          return {
-            triggered: isRainingNow(cur),
-            reason: isRainingNow(cur)
-              ? `Hujan aktif ${Number(mm).toFixed(1)} mm/jam (${weatherCodeLabel(cur.weather_code)})`
-              : `Tidak hujan ${Number(mm).toFixed(1)} mm/jam (${weatherCodeLabel(cur.weather_code)})`
-          };
-        }
-        case 'high_wind':
-          return {
-            triggered: cur.wind_speed_10m >= 18,
-            reason: `Kecepatan angin ${cur.wind_speed_10m.toFixed(1)} km/j`
-          };
-        default:
-          return { triggered: false, reason: '' };
-      }
-    }
-
-    function refreshTaskUI() {
-      const activeTasks = farmTasks.filter(t => !t.completed);
-      const completedTasks = farmTasks.filter(t => t.completed);
-      const routineActive = activeTasks.filter(t => t.type === 'rutin');
-      const triggeredActive = activeTasks.filter(t => evaluateConditionalTrigger(t).triggered);
-
-      // Update Sidebar Badge
-      const badge = document.getElementById('sidebarTaskBadge');
-      if (badge) {
-        badge.textContent = activeTasks.length;
-      }
-
-      // Update Stat Cards di Halaman Tugas
-      const elActive = document.getElementById('statTasksActive');
-      if (elActive) {
-        elActive.textContent = activeTasks.length;
-        document.getElementById('statTasksTriggered').textContent = triggeredActive.length;
-        document.getElementById('statTasksRoutine').textContent = routineActive.length;
-        document.getElementById('statTasksCompleted').textContent = completedTasks.length;
-      }
-
-      // Update Dashboard Summary Widget
-      renderDashboardTaskSummary(activeTasks, triggeredActive);
-
-      // Render Daftar Tugas Lengkap
-      renderTasksView();
-    }
-
-    function renderDashboardTaskSummary(activeTasks, triggeredActive) {
-      const container = document.getElementById('dashboardTaskSummaryList');
-      const triggeredBadge = document.getElementById('dashTriggeredBadge');
-      if (!container) return;
-
-      if (triggeredActive.length > 0) {
-        triggeredBadge.textContent = `${triggeredActive.length} Terpicu Cuaca`;
-        triggeredBadge.classList.remove('hidden');
-      } else {
-        triggeredBadge.classList.add('hidden');
-      }
-
-      // Prioritaskan tugas kondisional yang sedang terpicu, lalu prioritas tinggi
-      const priorityWeight = { Tinggi: 3, Sedang: 2, Rendah: 1 };
-      const sorted = [...activeTasks].sort((a, b) => {
-        const trigA = evaluateConditionalTrigger(a).triggered ? 10 : 0;
-        const trigB = evaluateConditionalTrigger(b).triggered ? 10 : 0;
-        if (trigB !== trigA) return trigB - trigA;
-        return (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0);
-      });
-
-      const previewTasks = sorted.slice(0, 6);
-
-      if (previewTasks.length === 0) {
-        container.innerHTML = `
-          <div class="col-span-full bg-teal-50/60 border border-teal-100 rounded-2xl p-4 text-center text-xs text-slate-600">
-            Semua tugas aktif sudah selesai! Klik <strong>Kelola Semua Tugas</strong> untuk menambah tugas baru atau mereset siklus rutin.
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = previewTasks.map(task => {
-        const trig = evaluateConditionalTrigger(task);
-        const typeMeta = getTaskTypeMeta(task.type);
-        const cardBorder = trig.triggered
-          ? 'border-rose-300 bg-rose-50/40 ring-1 ring-rose-200'
-          : 'border-slate-100 bg-slate-50/60 hover:bg-white';
-
-        return `
-          <div class="p-3.5 rounded-2xl border ${cardBorder} flex items-start justify-between gap-3 transition-all">
-            <div class="flex items-start gap-2.5 min-w-0">
-              <button onclick="toggleTaskComplete('${task.id}')" class="mt-0.5 w-5 h-5 rounded-lg border-2 border-teal-500 hover:bg-teal-100 flex items-center justify-center shrink-0 transition cursor-pointer" title="Tandai Selesai">
-              </button>
-              <div class="min-w-0">
-                <div class="flex items-center gap-1.5 flex-wrap mb-1">
-                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${typeMeta.badgeClass}">${typeMeta.label}</span>
-                  <span class="text-[10px] font-semibold text-slate-500">${task.zone}</span>
-                  ${trig.triggered ? `<span class="px-1.5 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-600 text-white">⚡ TERPICU</span>` : ''}
-                </div>
-                <p class="text-xs font-bold text-slate-900 truncate" title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</p>
-                <p class="text-[11px] text-slate-500 mt-0.5 truncate">${trig.triggered ? trig.reason : escapeHtml(task.detail)}</p>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderTasksView() {
-      const container = document.getElementById('tasksListContainer');
-      if (!container) return;
-
-      const searchQuery = (document.getElementById('taskSearchInput')?.value || '').toLowerCase().trim();
-      const typeFilter = document.getElementById('taskTypeFilter')?.value || 'all';
-      const zoneFilter = document.getElementById('taskZoneFilter')?.value || 'all';
-      const statusFilter = document.getElementById('taskStatusFilter')?.value || 'all';
-
-      const filtered = farmTasks.filter(task => {
-        if (typeFilter !== 'all' && task.type !== typeFilter) return false;
-        if (zoneFilter !== 'all' && task.zone !== zoneFilter) return false;
-        if (statusFilter === 'active' && task.completed) return false;
-        if (statusFilter === 'completed' && !task.completed) return false;
-        if (searchQuery) {
-          const haystack = `${task.title} ${task.detail} ${task.notes || ''} ${task.zone}`.toLowerCase();
-          if (!haystack.includes(searchQuery)) return false;
-        }
-        return true;
-      });
-
-      // Urutkan: Belum selesai dulu, lalu yang terpicu cuaca, lalu prioritas
-      const priorityWeight = { Tinggi: 3, Sedang: 2, Rendah: 1 };
-      filtered.sort((a, b) => {
-        if (a.completed !== b.completed) return a.completed ? 1 : -1;
-        const trigA = evaluateConditionalTrigger(a).triggered ? 10 : 0;
-        const trigB = evaluateConditionalTrigger(b).triggered ? 10 : 0;
-        if (trigB !== trigA) return trigB - trigA;
-        return (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0);
-      });
-
-      if (filtered.length === 0) {
-        container.innerHTML = `
-          <div class="col-span-full bg-white rounded-2xl p-8 text-center shadow-card border border-white">
-            <p class="text-sm font-bold text-slate-800">Tidak ada tugas yang sesuai filter</p>
-            <p class="text-xs text-slate-500 mt-1">Coba ubah filter pencarian atau klik tombol <strong>Tambah Tugas Baru</strong>.</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = filtered.map(task => {
-        const trig = evaluateConditionalTrigger(task);
-        const typeMeta = getTaskTypeMeta(task.type);
-        const prioBadge = getPriorityBadge(task.priority);
-
-        const cardStyle = task.completed
-          ? 'bg-white/75 border-slate-200/80 opacity-75'
-          : trig.triggered
-            ? 'bg-white border-rose-300 ring-2 ring-rose-500/20 shadow-cardHover'
-            : 'bg-white border-white shadow-card hover:shadow-cardHover';
-
-        return `
-          <div class="rounded-2xl p-5 border ${cardStyle} flex flex-col justify-between gap-4 transition-all">
-            <div>
-              <!-- Top Badges Row -->
-              <div class="flex items-center justify-between gap-2 flex-wrap mb-2.5">
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${typeMeta.badgeClass}">${typeMeta.icon} ${typeMeta.label}</span>
-                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">${escapeHtml(task.zone)}</span>
-                  ${trig.triggered && !task.completed ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-600 text-white animate-pulse">⚡ TERPICU SEKARANG</span>` : ''}
-                </div>
-                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${prioBadge}">${task.priority}</span>
-              </div>
-
-              <!-- Title + Checkbox -->
-              <div class="flex items-start gap-3">
-                <button onclick="toggleTaskComplete('${task.id}')" class="mt-0.5 w-6 h-6 rounded-xl border-2 ${task.completed ? 'bg-teal-600 border-teal-600 text-white' : 'border-slate-300 hover:border-teal-500 bg-white'} flex items-center justify-center shrink-0 transition cursor-pointer" title="${task.completed ? 'Tandai Belum Selesai' : 'Tandai Selesai'}">
-                  ${task.completed ? `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>` : ''}
-                </button>
-                <div class="min-w-0 flex-1">
-                  <h4 class="text-sm sm:text-base font-bold ${task.completed ? 'line-through text-slate-400' : 'text-slate-900'} leading-snug">
-                    ${escapeHtml(task.title)}
-                  </h4>
-                  <p class="text-xs font-semibold ${trig.triggered && !task.completed ? 'text-rose-700' : 'text-teal-700'} mt-1">
-                    ${escapeHtml(task.detail)}
-                  </p>
-                  ${trig.triggered && !task.completed ? `<p class="text-[11px] font-medium text-rose-600 mt-0.5">Kondisi aktual: ${trig.reason}</p>` : ''}
-                  ${task.notes ? `<p class="text-xs text-slate-500 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 leading-relaxed">${escapeHtml(task.notes)}</p>` : ''}
-                </div>
-              </div>
-            </div>
-
-            <!-- Action Footer -->
-            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-              <button onclick="toggleTaskComplete('${task.id}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold ${task.completed ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-teal-50 text-teal-800 hover:bg-teal-100'} transition cursor-pointer">
-                ${task.completed ? '↩ Buka Kembali' : '✓ Tandai Selesai'}
-              </button>
-
-              <div class="flex items-center gap-1.5">
-                <button onclick="openTaskModal('${task.id}')" class="p-2 rounded-xl text-slate-500 hover:text-teal-700 hover:bg-teal-50 transition cursor-pointer" title="Edit Tugas">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button onclick="deleteTask('${task.id}')" class="p-2 rounded-xl text-slate-500 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer" title="Hapus Tugas">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function getTaskTypeMeta(type) {
-      if (type === 'rutin') {
-        return { label: 'Rutin', icon: '🔄', badgeClass: 'bg-sky-100 text-sky-800' };
-      }
-      if (type === 'kondisional') {
-        return { label: 'Kondisional', icon: '⚡', badgeClass: 'bg-amber-100 text-amber-800' };
-      }
-      return { label: 'Sekali Jalan', icon: '📌', badgeClass: 'bg-purple-100 text-purple-800' };
-    }
-
-    function getPriorityBadge(priority) {
-      if (priority === 'Tinggi') return 'bg-rose-50 text-rose-700 border border-rose-200';
-      if (priority === 'Sedang') return 'bg-amber-50 text-amber-700 border border-amber-200';
-      return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-    }
-
-    function escapeHtml(str) {
-      return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    function toggleTaskComplete(taskId) {
-      const idx = farmTasks.findIndex(t => t.id === taskId);
-      if (idx === -1) return;
-      farmTasks[idx].completed = !farmTasks[idx].completed;
-      farmTasks[idx].completedAt = farmTasks[idx].completed ? new Date().toISOString() : null;
-      persistTasks({ action: 'task.toggle', id: taskId });
-      showToast(farmTasks[idx].completed ? 'Tugas ditandai selesai.' : 'Status tugas dikembalikan ke aktif.');
-    }
-
-    function deleteTask(taskId) {
-      const target = farmTasks.find(t => t.id === taskId);
-      if (!target) return;
-      farmTasks = farmTasks.filter(t => t.id !== taskId);
-      persistTasks({ action: 'task.delete', id: taskId });
-      showToast(`Tugas "${target.title}" telah dihapus.`);
-    }
-
-    function resetRoutineTasks() {
-      let resetCount = 0;
-      farmTasks.forEach(t => {
-        if (t.type === 'rutin' && t.completed) {
-          t.completed = false;
-          resetCount++;
-        }
-      });
-      persistTasks({ action: 'tasks.reset_routine' });
-      if (resetCount > 0) {
-        showToast(`${resetCount} tugas rutin direset untuk siklus baru.`);
-      } else {
-        showToast('Semua tugas rutin sudah dalam status aktif.');
-      }
-    }
-
-    function openTaskModal(taskId = null) {
-      const modal = document.getElementById('taskModal');
-      const titleEl = document.getElementById('taskModalTitle');
-      const idInput = document.getElementById('taskIdInput');
-
-      if (taskId) {
-        const existing = farmTasks.find(t => t.id === taskId);
-        if (!existing) return;
-        titleEl.textContent = 'Edit Tugas Farm';
-        idInput.value = existing.id;
-        document.getElementById('taskTitleInput').value = existing.title;
-        document.getElementById('taskZoneInput').value = existing.zone;
-        document.getElementById('taskPriorityInput').value = existing.priority;
-        document.getElementById('taskTypeInput').value = existing.type;
-        document.getElementById('taskTriggerRuleInput').value = existing.triggerRule || 'manual';
-        document.getElementById('taskDetailInput').value = existing.detail;
-        document.getElementById('taskNotesInput').value = existing.notes || '';
-      } else {
-        titleEl.textContent = 'Tambah Tugas Farm Baru';
-        idInput.value = '';
-        document.getElementById('taskForm').reset();
-        document.getElementById('taskTypeInput').value = 'rutin';
-        document.getElementById('taskTriggerRuleInput').value = 'manual';
-      }
-
-      toggleTaskTypeFields();
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function closeTaskModal() {
-      const modal = document.getElementById('taskModal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function toggleTaskTypeFields() {
-      const typeVal = document.getElementById('taskTypeInput').value;
-      const condGroup = document.getElementById('conditionalRuleGroup');
-      const detailLabel = document.getElementById('taskDetailLabel');
-      const detailInput = document.getElementById('taskDetailInput');
-
-      if (typeVal === 'kondisional') {
-        condGroup.classList.remove('hidden');
-        detailLabel.textContent = 'Syarat Kondisi Pemicu *';
-        detailInput.placeholder = 'Contoh: Jika Suhu Kandang ≥ 34.5°C atau air kolam keruh';
-      } else if (typeVal === 'rutin') {
-        condGroup.classList.add('hidden');
-        detailLabel.textContent = 'Detail Jadwal Rutin *';
-        detailInput.placeholder = 'Contoh: Harian • Setiap Pagi 07:00 WIB';
-      } else {
-        condGroup.classList.add('hidden');
-        detailLabel.textContent = 'Target Waktu / Keterangan Pelaksanaan *';
-        detailInput.placeholder = 'Contoh: Sekali Jalan • Akhir pekan ini';
-      }
-    }
-
-    function applyPresetConditionLabel() {
-      const rule = document.getElementById('taskTriggerRuleInput').value;
-      const detailInput = document.getElementById('taskDetailInput');
-      const presets = {
-        kandang_hot: 'Jika Suhu Kandang Ayam ≥ 34.5°C',
-        kolam_warm: 'Jika Suhu Air Kolam Ikan ≥ 31.0°C',
-        kolam_cold: 'Jika Suhu Air Kolam Ikan ≤ 26.0°C',
-        ubi_hot_dry: 'Jika Suhu Ubi Jalar ≥ 34.0°C & RH < 65%',
-        ubi_hot_dry_no_rain: 'Jika Suhu Ubi Jalar ≥ 34.0°C, RH < 65% & Peluang Hujan 3 jam < 60%',
-        cloudy_rain: 'Jika Tutupan Awan Tebal (≥ 80% / Potensi Hujan)',
-        hujan: 'Jika Hujan Terdeteksi (Curah Hujan > 0 mm/jam)',
-        high_wind: 'Jika Kecepatan Angin Kencang (≥ 18 km/j)'
-      };
-      if (presets[rule]) {
-        detailInput.value = presets[rule];
-      }
-    }
-
-    function saveTaskForm(event) {
-      event.preventDefault();
-      const id = document.getElementById('taskIdInput').value;
-      const title = document.getElementById('taskTitleInput').value.trim();
-      const zone = document.getElementById('taskZoneInput').value;
-      const priority = document.getElementById('taskPriorityInput').value;
-      const type = document.getElementById('taskTypeInput').value;
-      const triggerRule = type === 'kondisional' ? document.getElementById('taskTriggerRuleInput').value : 'manual';
-      const detail = document.getElementById('taskDetailInput').value.trim();
-      const notes = document.getElementById('taskNotesInput').value.trim();
-
-      if (!title || !detail) return;
-
-      let createdTask = null;
-
-      if (id) {
-        const idx = farmTasks.findIndex(t => t.id === id);
-        if (idx !== -1) {
-          const patch = { title, zone, priority, type, triggerRule, detail, notes };
-          farmTasks[idx] = { ...farmTasks[idx], ...patch };
-          closeTaskModal();
-          persistTasks({ action: 'task.update', id, patch });
-          showToast('Perubahan tugas berhasil disimpan.');
-          return;
-        }
-      } else {
-        const newTask = {
-          id: 'task-' + Date.now(),
-          title,
-          zone,
-          priority,
-          type,
-          triggerRule,
-          detail,
-          notes,
-          completed: false,
-          createdAt: Date.now()
-        };
-        farmTasks.unshift(newTask);
-        createdTask = newTask;
-        showToast('Tugas baru berhasil ditambahkan.');
-      }
-
-      closeTaskModal();
-      persistTasks(createdTask ? { action: 'task.add', task: createdTask } : undefined);
     }
 
     // =========================================================================
@@ -1991,6 +1106,7 @@
         nextBmkgForecastAt = Date.now() + BMKG_FORECAST_REFRESH_MS;
         renderBmkgForecast();
         renderBmkgStatus();
+        renderKalender();
       }
     }
 
@@ -2053,6 +1169,108 @@
     }
 
     // =========================================================================
+    // 4c. KALENDER SIRAMAN & PUPUK — turunan dari prakiraan hujan BMKG.
+    //     Tanpa sensor. Bukan janji panen, hanya penanda jadwal kerja lapangan.
+    // =========================================================================
+    const HARI_ID = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const BULAN_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+    function tanggalKalender(analysisDate, offsetHari) {
+      if (!analysisDate) return null;
+      const d = new Date(analysisDate);
+      if (isNaN(d.getTime())) return null;
+      d.setDate(d.getDate() + offsetHari);
+      return `${HARI_ID[d.getDay()]}, ${d.getDate()} ${BULAN_ID[d.getMonth()]}`;
+    }
+
+    function renderKalender() {
+      const grid = document.getElementById('calGrid');
+      const pill = document.getElementById('calStatusPill');
+      if (!grid) return;
+
+      const f = bmkgPayload && bmkgPayload.forecast;
+      if (!f || !Array.isArray(f.days) || !f.days.length) {
+        grid.innerHTML = '<div class="text-xs text-slate-500">Kalender belum tersedia — prakiraan BMKG offline.</div>';
+        if (pill) { pill.textContent = 'BMKG Offline'; pill.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200'; }
+        ['calDryDays','calWetDays','calTotalRain'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '–'; });
+        return;
+      }
+
+      // Agregat per hari: total hujan (mm), suhu maks (°C), deskripsi dominan.
+      const ringkasan = f.days.map((day, i) => {
+        const periods = day.periods || [];
+        const totalRain = periods.reduce((a, p) => a + (Number(p.tp) || 0), 0);
+        const temps = periods.map(p => p.t).filter(v => v !== null && v !== undefined);
+        const maxT = temps.length ? Math.max(...temps) : null;
+        const rainy = periods.filter(p => Number(p.tp) > 0).length;
+        const desc = periods.find(p => Number(p.tp) > 0 && p.desc)?.desc || periods[0]?.desc || '-';
+        return {
+          idx: i,
+          label: tanggalKalender(f.analysisDate, i) || `Hari ${i + 1}`,
+          totalRain: Number(totalRain.toFixed(1)),
+          maxT,
+          rainyPeriods: rainy,
+          desc,
+          wet: totalRain > 0
+        };
+      });
+
+      const wetDays = ringkasan.filter(d => d.wet).length;
+      const dryDays = ringkasan.length - wetDays;
+      const totalAll = Number(ringkasan.reduce((a, d) => a + d.totalRain, 0).toFixed(1));
+      const elDry = document.getElementById('calDryDays');
+      const elWet = document.getElementById('calWetDays');
+      const elTotal = document.getElementById('calTotalRain');
+      if (elDry) elDry.textContent = dryDays;
+      if (elWet) elWet.textContent = wetDays;
+      if (elTotal) elTotal.textContent = totalAll.toFixed(1);
+
+      if (pill) {
+        pill.textContent = f.analysisDate ? `Analisis BMKG ${f.analysisDate.slice(0, 10)}` : 'Berdasarkan BMKG';
+        pill.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200';
+      }
+
+      grid.innerHTML = ringkasan.map(d => {
+        const cardCls = d.wet
+          ? 'border-blue-200 bg-blue-50/50'
+          : 'border-teal-100 bg-teal-50/40';
+        const badgeCls = d.wet
+          ? 'bg-blue-600 text-white'
+          : 'bg-teal-600 text-white';
+        const badgeText = d.wet ? 'TUNDA SIRAM & PUPUK' : 'SIRAM + PUPUK SORE';
+
+        // Tindakan nyata per lini, dari data yang sama (tanpa sensor).
+        const aksiUbi = d.wet
+          ? 'Lahan ubi: jangan siram/pupuk hari ini — hujan cukup. Cek drainase bedengan.'
+          : 'Lahan ubi: siram bedengan 16.00–17.00 WIB, lalu pupuk setelah siram.';
+        const aksiIkan = d.wet
+          ? 'Kolam: kurangi pelet 30%, cek level air & drainase (hujan).'
+          : 'Kolam: pakan normal, cek aerasi' + (d.maxT !== null && d.maxT > 33 ? ' ekstra (suhu > 33°C).' : '.');
+        const detailSuhu = d.maxT !== null ? `maks ${d.maxT}°C` : 'suhu –';
+
+        return `
+          <div class="rounded-2xl p-5 border ${cardCls} shadow-card">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div>
+                <h5 class="text-sm font-extrabold text-slate-900">${d.label}</h5>
+                <p class="text-[11px] text-slate-500 mt-0.5">${d.desc} • ${detailSuhu}</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold ${badgeCls}">${badgeText}</span>
+            </div>
+            <div class="flex items-baseline gap-1.5 mb-3">
+              <span class="text-2xl font-extrabold ${d.wet ? 'text-blue-700' : 'text-teal-700'}">${d.totalRain.toFixed(1)}</span>
+              <span class="text-[11px] font-semibold text-slate-500">mm hujan • ${d.rainyPeriods} periode hujan</span>
+            </div>
+            <ul class="text-[11px] text-slate-700 space-y-1.5 leading-relaxed">
+              <li>🍠 ${aksiUbi}</li>
+              <li>🐟 ${aksiIkan}</li>
+            </ul>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
     // 5. RENDER KPI, GRAFIK, PETA SKEMA & PERINGATAN OTOMATIS
     // =========================================================================
     function renderDashboard(payload) {
@@ -2081,7 +1299,7 @@
         temp5hAgo
       });
 
-      // Peluang hujan maksimum 3 jam ke depan (gerbang hujan untuk tugas siram)
+      // Peluang hujan maksimum 3 jam ke depan (dipakai konteks peringatan)
       const rainSeries = hourly.precipitation_probability || [];
       const rainWindow = rainSeries.slice(curIdx, curIdx + 4).filter(v => v !== null && v !== undefined);
       const rainNext3 = rainWindow.length ? Math.max(...rainWindow) : null;
@@ -2092,7 +1310,7 @@
       const pastWindow = precSeries.slice(Math.max(0, curIdx - 3), curIdx + 1).filter(v => v !== null && v !== undefined);
       const rainPast3 = pastWindow.length ? Number(pastWindow.reduce((a, b) => a + b, 0).toFixed(1)) : null;
 
-      // Simpan snapshot terbaru untuk evaluasi tugas kondisional otomatis
+      // Simpan snapshot terbaru untuk konteks peringatan otomatis
       latestEnvSnapshot = { cur, calc: nowCalc, rainNext3, rainPast3 };
 
       // Update KPI Cards
@@ -2112,8 +1330,8 @@
       // Render Peringatan & Rekomendasi Otomatis
       renderAutomatedAlerts(cur, nowCalc);
 
-      // Perbarui status tugas kondisional & ringkasan tugas
-      refreshTaskUI();
+      // Perbarui kalender siraman & pupuk dari prakiraan BMKG terbaru
+      renderKalender();
 
       // Update timestamp sinkronisasi terakhir
       const nowTime = new Date();
@@ -2577,7 +1795,7 @@
     function switchMainView(viewName, btnEl) {
       currentMainView = viewName;
       const dashView = document.getElementById('dashboardView');
-      const tasksView = document.getElementById('tasksView');
+      const calView = document.getElementById('calendarView');
 
       // Update active button style
       document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -2589,12 +1807,12 @@
         btnEl.classList.add('bg-[#D3F4F6]', 'text-teal-900', 'font-semibold');
       }
 
-      if (viewName === 'tasks') {
+      if (viewName === 'calendar') {
         dashView.classList.add('hidden');
-        tasksView.classList.remove('hidden');
-        refreshTaskUI();
+        calView.classList.remove('hidden');
+        renderKalender();
       } else {
-        tasksView.classList.add('hidden');
+        calView.classList.add('hidden');
         dashView.classList.remove('hidden');
       }
 
@@ -2604,7 +1822,7 @@
     }
 
     function selectNav(zone, btnEl) {
-      // Pastikan kembali ke tampilan dashboard utama jika sedang di tab Tugas Farm
+      // Pastikan kembali ke tampilan dashboard utama jika sedang di tab Kalender
       switchMainView('dashboard', btnEl);
 
       // Highlight matching KPI card & filter chart
@@ -2739,12 +1957,10 @@
 
     // Inisialisasi saat halaman dimuat
     window.addEventListener('DOMContentLoaded', async () => {
-      refreshTaskUI();
       startClocksAndAutoSync();
       fetchBanjarasriWeather(false);
       fetchBmkgAll(false);
       await handleClaimLink();
-      updateSyncStatusUI();
       syncStateFromApi();
       setInterval(syncStateFromApi, 5 * 60 * 1000);
     });
