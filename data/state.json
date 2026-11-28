@@ -16,6 +16,208 @@
     "kolamBase": -1.8,
     "ubiSolar": 3.2
   },
+  "alertRules": {
+    "version": 1,
+    "maxAlerts": 8,
+    "rules": [
+      {
+        "id": "kandang_panas",
+        "zone": "Kandang Ayam",
+        "order": 10,
+        "enabled": true,
+        "tone": "warning",
+        "when": {
+          "metric": "kandang",
+          "op": ">=",
+          "value": 34.5
+        },
+        "title": "Kandang Ayam Panas ({kandang}°C)",
+        "desc": "Radiasi atap fiber tinggi. Pastikan sirkulasi depan-belakang tidak terhalang & tambah air minum."
+      },
+      {
+        "id": "kandang_stabil",
+        "zone": "Kandang Ayam",
+        "order": 11,
+        "enabled": true,
+        "tone": "ok",
+        "when": {
+          "metric": "kandang",
+          "op": "<",
+          "value": 34.5
+        },
+        "title": "Sirkulasi Kandang Stabil ({kandang}°C)",
+        "desc": "Hembusan angin {wind} km/j membantu membuang panas atap fiber secara alami."
+      },
+      {
+        "id": "kolam_optimal",
+        "zone": "Kolam Ikan",
+        "order": 20,
+        "enabled": true,
+        "tone": "ok",
+        "when": {
+          "metric": "kolam",
+          "op": "between",
+          "value": [
+            27,
+            31
+          ]
+        },
+        "title": "Jendela Pakan Ikan Optimal ({kolam}°C)",
+        "desc": "Metabolisme ikan aktif di suhu air 27–31°C. Pemberian pakan dapat dilakukan normal."
+      },
+      {
+        "id": "kolam_panas",
+        "zone": "Kolam Ikan",
+        "order": 21,
+        "enabled": true,
+        "tone": "warning",
+        "when": {
+          "metric": "kolam",
+          "op": ">",
+          "value": 31
+        },
+        "title": "Air Kolam Menghangat ({kolam}°C)",
+        "desc": "Akumulasi panas matahari jam 09–15. Nyalakan aerasi lebih kuat untuk menjaga oksigen terlarut."
+      },
+      {
+        "id": "kolam_sejuk",
+        "zone": "Kolam Ikan",
+        "order": 22,
+        "enabled": true,
+        "tone": "info",
+        "when": {
+          "metric": "kolam",
+          "op": "<",
+          "value": 27
+        },
+        "title": "Suhu Air Kolam Sejuk ({kolam}°C)",
+        "desc": "Dinding 2m menahan panas berlebih; kurangi porsi pakan jika suhu air di bawah 26°C."
+      },
+      {
+        "id": "ubi_evapotranspirasi",
+        "zone": "Lahan Ubi Jalar",
+        "order": 30,
+        "enabled": true,
+        "tone": "danger",
+        "when": {
+          "all": [
+            {
+              "metric": "ubi",
+              "op": ">=",
+              "value": 34
+            },
+            {
+              "metric": "rh",
+              "op": "<",
+              "value": 60
+            }
+          ]
+        },
+        "title": "Evapotranspirasi Ubi Jalar Tinggi ({ubi}°C)",
+        "desc": "Lahan terbuka terpapar matahari penuh & RH {rh}%. Jadwalkan penyiraman sore hari agar umbi tetap lembap."
+      },
+      {
+        "id": "ubi_kondusif",
+        "zone": "Lahan Ubi Jalar",
+        "order": 31,
+        "enabled": true,
+        "tone": "ok",
+        "when": {
+          "any": [
+            {
+              "metric": "ubi",
+              "op": "<",
+              "value": 34
+            },
+            {
+              "metric": "rh",
+              "op": ">=",
+              "value": 60
+            }
+          ]
+        },
+        "title": "Lahan Ubi Jalar Kondusif ({ubi}°C)",
+        "desc": "Fotosintesis kanopi terbuka berjalan optimal dengan kelembapan udara {rh}%."
+      },
+      {
+        "id": "hujan_offline",
+        "zone": "Umum",
+        "order": 40,
+        "enabled": true,
+        "tone": "info",
+        "when": {
+          "metric": "precip",
+          "op": "is_null"
+        },
+        "title": "Data Hujan Tidak Tersedia (Offline)",
+        "desc": "Tidak dapat memastikan hujan. Periksa koneksi dan klik Refresh Data."
+      },
+      {
+        "id": "hujan_aktif",
+        "zone": "Umum",
+        "order": 41,
+        "enabled": true,
+        "tone": "rain",
+        "when": {
+          "metric": "hujanAktif",
+          "op": "==",
+          "value": 1
+        },
+        "title": "Hujan Terdeteksi — {weatherLabel} ({precip} mm/jam)",
+        "desc": "Hujan aktif di Banjarasri. Tunda penyiraman ubi & pakan ikan; cek talang air kandang dan aerasi kolam."
+      },
+      {
+        "id": "hujan_baru",
+        "zone": "Umum",
+        "order": 42,
+        "enabled": true,
+        "tone": "rain",
+        "when": {
+          "all": [
+            {
+              "metric": "hujanAktif",
+              "op": "==",
+              "value": 0
+            },
+            {
+              "metric": "rainPast3",
+              "op": ">",
+              "value": 0
+            }
+          ]
+        },
+        "title": "Baru Saja Hujan — {rainPast3} mm/3 jam",
+        "desc": "Hujan sudah reda sekarang ({weatherLabel}). Cek talang air kandang, drainase bedengan ubi, dan pastikan aerasi kolam tetap jalan."
+      },
+      {
+        "id": "tidak_hujan",
+        "zone": "Umum",
+        "order": 43,
+        "enabled": true,
+        "tone": "ok",
+        "when": {
+          "all": [
+            {
+              "metric": "precip",
+              "op": "is_not_null"
+            },
+            {
+              "metric": "hujanAktif",
+              "op": "==",
+              "value": 0
+            },
+            {
+              "metric": "rainPast3",
+              "op": "<=",
+              "value": 0
+            }
+          ]
+        },
+        "title": "Tidak Hujan — {weatherLabel}",
+        "desc": "Curah hujan {precip} mm/jam. Peluang hujan 3 jam ke depan {rainNext3}%."
+      }
+    ]
+  },
   "tasks": [
     {
       "id": "task-8",

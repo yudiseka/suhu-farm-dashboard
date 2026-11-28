@@ -56,6 +56,38 @@ makanya hujan tidak pernah dilaporkan walau awan 98%.
 - Refresh cuaca tiap **15 menit** (Open-Meteo `current` update tiap 15 menit).
 - Mode offline: curah hujan ditandai `null` → tampil "tidak diketahui", **tidak mengarang angka**.
 
+## Aturan Peringatan & Rekomendasi (backend)
+
+Aturan disimpan di `data/state.json` → `alertRules` dan dilayani lewat
+`GET /api/state`. Browser mengevaluasinya dengan `lib/alert-rules.js`.
+Mengubah aturan **tidak perlu deploy ulang UI** — cukup edit file tersebut atau
+POST ke `/api/state`.
+
+Bentuk aturan:
+```json
+{
+  "id": "kandang_panas", "zone": "Kandang Ayam", "order": 10,
+  "enabled": true, "tone": "warning",
+  "when": { "metric": "kandang", "op": ">=", "value": 34.5 },
+  "title": "Kandang Ayam Panas ({kandang}°C)",
+  "desc": "Radiasi atap fiber tinggi. Pastikan sirkulasi depan-belakang tidak terhalang."
+}
+```
+- `when` bisa `all` (AND), `any` (OR), atau kondisi tunggal.
+- `op`: `>= <= > < == != between is_null is_not_null`.
+- `metric`: `kandang kolam ubi banjarasri rh wind cloud precip weatherCode
+  rainPast3 rainNext3 hujanAktif weatherLabel hour`.
+- `tone`: `ok info warning danger rain`. Template `{namaMetric}` diisi otomatis.
+
+Contoh tambah aturan lewat API (butuh `x-api-key`):
+```bash
+curl -X POST https://dashboard-rho-five-48.vercel.app/api/state \
+  -H 'Content-Type: application/json' -H 'x-api-key: <FARM_API_KEY>' \
+  -d '{"action":"alerts.rules_set","rules":{...}}'
+```
+Aksi lain: `alerts.rule_update` (`id`, `patch:{enabled,title,desc,tone}`),
+`alerts.rules_reset`. Default 11 aturan mencakup kandang, kolam, ubi, dan hujan.
+
 ## Environment Vercel
 
 | variabel | wajib | isi |

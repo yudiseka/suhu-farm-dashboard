@@ -12,6 +12,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Engine aturan peringatan (ruleset dari backend data/state.json) -->
+  <script src="/lib/alert-rules.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -824,6 +826,7 @@
     let offsets = loadOffsets();
     let weatherPayload = null;
     let latestEnvSnapshot = null; // Menyimpan pembacaan suhu/cuaca terbaru untuk evaluasi tugas kondisional
+    let backendAlertRules = null;   // Ruleset peringatan dari /api/state (data/state.json)
     let trendChartInstance = null;
     let barChartInstance = null;
     let currentTrendFilter = 'all';
@@ -994,6 +997,12 @@
         if (state.offsets) {
           offsets = { ...DEFAULT_OFFSETS, ...state.offsets };
           try { localStorage.setItem('rencang_farm_offsets', JSON.stringify(offsets)); } catch (e) { /* ignore */ }
+          if (weatherPayload) renderDashboard(weatherPayload);
+        }
+
+        // Ruleset peringatan dari backend — sumber kebenaran untuk rekomendasi
+        if (state.alertRules && window.RencangAlertRules) {
+          backendAlertRules = window.RencangAlertRules.normalizeAlertRules(state.alertRules);
           if (weatherPayload) renderDashboard(weatherPayload);
         }
 
@@ -2212,117 +2221,59 @@
       });
     }
 
+    // Peringatan & rekomendasi dievaluasi dari ruleset di backend (data/state.json).
+    // Engine: window.RencangAlertRules. Jika backend belum terhubung, pakai default.
+    function buildAlertContext(cur, calc) {
+      const past = (latestEnvSnapshot && latestEnvSnapshot.rainPast3 !== null)
+        ? latestEnvSnapshot.rainPast3
+        : (latestEnvSnapshot && latestEnvSnapshot.rainPast3 !== undefined ? latestEnvSnapshot.rainPast3 : null);
+      const past3 = (past === null || past === undefined) ? 0 : Number(past);
+      const hujanAktif = isRainingNow(cur) ? 1 : 0;
+      return {
+        kandang: Number(calc.kandang.toFixed(1)),
+        kolam: Number(calc.kolam.toFixed(1)),
+        ubi: Number(calc.ubi.toFixed(1)),
+        banjarasri: Number(calc.banjarasri.toFixed(1)),
+        rh: Number(cur.relative_humidity_2m),
+        wind: Number(cur.wind_speed_10m),
+        cloud: Number(cur.cloud_cover),
+        precip: (cur.precipitation === null || cur.precipitation === undefined) ? null : Number(cur.precipitation),
+        weatherCode: (cur.weather_code === null || cur.weather_code === undefined) ? null : Number(cur.weather_code),
+        rainPast3: past3,
+        rainNext3: (latestEnvSnapshot && latestEnvSnapshot.rainNext3 !== null && latestEnvSnapshot.rainNext3 !== undefined)
+          ? Number(latestEnvSnapshot.rainNext3) : 0,
+        hujanAktif,
+        weatherLabel: weatherCodeLabel(cur.weather_code),
+        hour: Number(cur.time.split('T')[1].split(':')[0])
+      };
+    }
+
+    const ALERT_TONES = {
+      ok:      { border: 'border-teal-100',    icon: 'text-teal-600 bg-teal-100',    path: 'M5 13l4 4L19 7' },
+      info:    { border: 'border-sky-100',     icon: 'text-sky-600 bg-sky-100',      path: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+      warning: { border: 'border-amber-200',   icon: 'text-amber-600 bg-amber-100',   path: 'M12 9v2m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z' },
+      danger:  { border: 'border-rose-200',    icon: 'text-rose-600 bg-rose-100',     path: 'M12 9v2m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z' },
+      rain:    { border: 'border-blue-200',    icon: 'text-blue-600 bg-blue-100',     path: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' }
+    };
+
     function renderAutomatedAlerts(cur, calc) {
       const container = document.getElementById('alertsContainer');
-      const alerts = [];
+      if (!container) return;
+      const ctx = buildAlertContext(cur, calc);
+      const engine = window.RencangAlertRules;
+      const ruleset = backendAlertRules || (engine ? engine.defaultAlertRules() : null);
+      const evaluated = engine && ruleset
+        ? engine.evaluate(ruleset, ctx)
+        : [];
 
-      // 1. Evaluasi Kandang Ayam
-      if (calc.kandang >= 34.5) {
-        alerts.push({
-          type: 'warning',
-          bg: 'bg-amber-50 border-amber-200',
-          iconColor: 'text-amber-600 bg-amber-100',
-          title: `Kandang Ayam Panas (${calc.kandang.toFixed(1)}°C)`,
-          desc: 'Radiasi atap fiber tinggi. Pastikan sirkulasi depan-belakang tidak terhalang & tambah air minum.'
-        });
-      } else {
-        alerts.push({
-          type: 'ok',
-          bg: 'bg-teal-50/70 border-teal-100',
-          iconColor: 'text-teal-600 bg-teal-100',
-          title: `Sirkulasi Kandang Stabil (${calc.kandang.toFixed(1)}°C)`,
-          desc: `Hembusan angin ${cur.wind_speed_10m} km/j membantu membuang panas atap fiber secara alami.`
-        });
-      }
-
-      // 2. Evaluasi Kolam Ikan Terpal
-      if (calc.kolam >= 27.0 && calc.kolam <= 31.0) {
-        alerts.push({
-          type: 'ok',
-          bg: 'bg-cyan-50/70 border-cyan-100',
-          iconColor: 'text-cyan-600 bg-cyan-100',
-          title: `Jendela Pakan Ikan Optimal (${calc.kolam.toFixed(1)}°C)`,
-          desc: 'Metabolisme ikan aktif di suhu air 27–31°C. Pemberian pakan dapat dilakukan normal.'
-        });
-      } else if (calc.kolam > 31.0) {
-        alerts.push({
-          type: 'warning',
-          bg: 'bg-amber-50 border-amber-200',
-          iconColor: 'text-amber-600 bg-amber-100',
-          title: `Air Kolam Menghangat (${calc.kolam.toFixed(1)}°C)`,
-          desc: 'Akumulasi panas matahari jam 09–15. Nyalakan aerasi lebih kuat untuk menjaga oksigen terlarut.'
-        });
-      } else {
-        alerts.push({
-          type: 'info',
-          bg: 'bg-sky-50/70 border-sky-100',
-          iconColor: 'text-sky-600 bg-sky-100',
-          title: `Suhu Air Kolam Sejuk (${calc.kolam.toFixed(1)}°C)`,
-          desc: 'Dinding 2m menahan panas berlebih; kurangi porsi pakan jika suhu air di bawah 26°C.'
-        });
-      }
-
-      // 3. Evaluasi Lahan Ubi Jalar
-      if (calc.ubi >= 34.0 && cur.relative_humidity_2m < 60) {
-        alerts.push({
-          type: 'warning',
-          bg: 'bg-emerald-50 border-emerald-200',
-          iconColor: 'text-emerald-700 bg-emerald-100',
-          title: `Evapotranspirasi Ubi Jalar Tinggi (${calc.ubi.toFixed(1)}°C)`,
-          desc: 'Lahan terbuka terpapar matahari penuh. Jadwalkan penyiraman sore hari agar umbi tetap lembap.'
-        });
-      } else {
-        alerts.push({
-          type: 'ok',
-          bg: 'bg-emerald-50/60 border-emerald-100',
-          iconColor: 'text-emerald-600 bg-emerald-100',
-          title: `Lahan Ubi Jalar Kondusif (${calc.ubi.toFixed(1)}°C)`,
-          desc: 'Fotosintesis kanopi terbuka berjalan optimal dengan kelembapan udara ' + cur.relative_humidity_2m + '%.'
-        });
-      }
-
-      // 4. Evaluasi Hujan (curah hujan langsung dari Open-Meteo)
-      if (cur.precipitation === null || cur.precipitation === undefined) {
-        alerts.push({
-          type: 'info',
-          bg: 'bg-slate-50 border-slate-200',
-          iconColor: 'text-slate-500 bg-slate-100',
-          title: 'Data Hujan Tidak Tersedia (Offline)',
-          desc: 'Tidak dapat memastikan hujan. Periksa koneksi dan klik Refresh Data.'
-        });
-      } else if (isRainingNow(cur)) {
-        alerts.push({
-          type: 'warning',
-          bg: 'bg-blue-50 border-blue-200',
-          iconColor: 'text-blue-600 bg-blue-100',
-          title: `Hujan Terdeteksi — ${weatherCodeLabel(cur.weather_code)} (${Number(cur.precipitation).toFixed(1)} mm/jam)`,
-          desc: 'Hujan aktif di Banjarasri. Tunda penyiraman ubi & pakan ikan; cek talang air kandang dan aerasi kolam.'
-        });
-      } else if (latestEnvSnapshot && latestEnvSnapshot.rainPast3 !== null && latestEnvSnapshot.rainPast3 > 0) {
-        alerts.push({
-          type: 'warning',
-          bg: 'bg-blue-50/70 border-blue-200',
-          iconColor: 'text-blue-600 bg-blue-100',
-          title: `Baru Saja Hujan — ${latestEnvSnapshot.rainPast3.toFixed(1)} mm/3 jam`,
-          desc: `Hujan sudah reda sekarang (${weatherCodeLabel(cur.weather_code)}). Cek talang air kandang, drainase bedengan ubi, dan pastikan aerasi kolam tetap jalan.`
-        });
-      } else {
-        alerts.push({
-          type: 'ok',
-          bg: 'bg-teal-50/70 border-teal-100',
-          iconColor: 'text-teal-600 bg-teal-100',
-          title: `Tidak Hujan — ${weatherCodeLabel(cur.weather_code)}`,
-          desc: `Curah hujan ${Number(cur.precipitation).toFixed(1)} mm/jam. ${latestEnvSnapshot && latestEnvSnapshot.rainNext3 !== null ? 'Peluang hujan 3 jam ke depan ' + latestEnvSnapshot.rainNext3 + '%.' : ''}`
-        });
-      }
-
-      document.getElementById('alertCountBadge').textContent = `${alerts.length} Info`;
-
-      container.innerHTML = alerts.map(item => `
-        <div class="p-3 rounded-xl border ${item.bg} flex items-start gap-3 transition-all">
-          <div class="w-8 h-8 rounded-lg ${item.iconColor} flex items-center justify-center shrink-0 mt-0.5">
+      document.getElementById('alertCountBadge').textContent = `${evaluated.length} Info`;
+      container.innerHTML = evaluated.map(item => {
+        const tone = ALERT_TONES[item.tone] || ALERT_TONES.info;
+        return `
+        <div class="p-3 rounded-xl border ${tone.border} flex items-start gap-3 transition-all">
+          <div class="w-8 h-8 rounded-lg ${tone.icon} flex items-center justify-center shrink-0 mt-0.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="${tone.path}" />
             </svg>
           </div>
           <div>
@@ -2330,7 +2281,8 @@
             <p class="text-[11px] text-slate-600 mt-0.5 leading-relaxed">${item.desc}</p>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     // =========================================================================

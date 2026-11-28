@@ -2,6 +2,7 @@
 
 const crypto = require('crypto');
 const { readState, writeState } = require('../lib/store');
+const { normalizeAlertRules } = require('../lib/alert-rules');
 
 const ZONES = ['Kandang Ayam', 'Kolam Ikan', 'Lahan Ubi Jalar', 'Umum'];
 const TYPES = ['rutin', 'kondisional', 'sekali'];
@@ -183,6 +184,35 @@ module.exports = async function handler(req, res) {
         });
         logHistory(state, '*', `reset_routine:${count}`, by);
         result = { reset: count };
+        break;
+      }
+      case 'alerts.rules_set': {
+        const rs = normalizeAlertRules(body.rules);
+        state.alertRules = rs;
+        logHistory(state, '*', 'alert_rules_set', by);
+        result = { alertRules: rs };
+        break;
+      }
+      case 'alerts.rules_reset': {
+        state.alertRules = normalizeAlertRules(undefined);
+        logHistory(state, '*', 'alert_rules_reset', by);
+        result = { alertRules: state.alertRules };
+        break;
+      }
+      case 'alerts.rule_update': {
+        const rs = normalizeAlertRules(state.alertRules);
+        const idx = rs.rules.findIndex((r) => r.id === body.id);
+        if (idx === -1) return send(res, 404, { ok: false, error: `Aturan ${body.id} tidak ditemukan` });
+        const patch = body.patch || {};
+        if (patch.enabled !== undefined) rs.rules[idx].enabled = Boolean(patch.enabled);
+        if (patch.title !== undefined) rs.rules[idx].title = text(patch.title, 160);
+        if (patch.desc !== undefined) rs.rules[idx].desc = text(patch.desc, 400);
+        if (patch.tone !== undefined && ['ok', 'info', 'warning', 'danger', 'rain'].includes(patch.tone)) {
+          rs.rules[idx].tone = patch.tone;
+        }
+        state.alertRules = rs;
+        logHistory(state, rs.rules[idx].id, 'alert_rule_updated', by);
+        result = { rule: rs.rules[idx] };
         break;
       }
       case 'offsets.update': {
